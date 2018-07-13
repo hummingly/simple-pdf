@@ -1,0 +1,11 @@
+[package]
+name = "simple-pdf"
+version = "0.1.0"
+authors = ["Little Bird <31522351+hummingly@users.noreply.github.com>"]
+
+[build-dependencies]
+lazy_static = "1.0"
+
+[dependencies]
+lazy_static = "1.0"
+time = "0.1"
