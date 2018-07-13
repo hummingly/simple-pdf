@@ -2,7 +2,6 @@
 extern crate simple_pdf;
 
 use simple_pdf::graphicsstate::Color;
-use simple_pdf::units::Pt;
 use simple_pdf::Pdf;
 use std::f32::consts::PI;
 
@@ -24,7 +23,7 @@ fn main() {
     // That function then puts content on the page by calling methods
     // on the canvas.
     document
-        .render_page(Pt(400.0), Pt(400.0), |c| {
+        .render_page(400.0, 400.0, |c| {
             let (x, y) = (200.0, 200.0);
             let r = 190.0;
 

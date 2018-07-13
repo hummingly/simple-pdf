@@ -77,9 +77,9 @@ impl Color {
 /// ```
 /// # use simple_pdf::{Pdf, BuiltinFont, FontSource};
 /// # use simple_pdf::graphicsstate::Matrix;
-/// use simple_pdf::units::Pt;
+/// 
 /// # let mut document: Pdf = Pdf::create("foo.pdf").unwrap();
-/// # document.render_page(Pt(180.0), Pt(240.0), |canvas| {
+/// # document.render_page(180.0, 240.0, |canvas| {
 /// canvas.concat(&Matrix::translate(10.0, 24.0))?;
 ///
 /// // Matrixes can be combined by multiplication:

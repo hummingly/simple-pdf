@@ -2,7 +2,7 @@
 extern crate simple_pdf;
 
 use simple_pdf::graphicsstate::Color;
-use simple_pdf::units::{Mm, Pt};
+use simple_pdf::units::Mm;
 use simple_pdf::{BuiltinFont, FontSource, Pdf};
 
 /// Create a `text.pdf` file, with a single page containg some
@@ -10,10 +10,10 @@ use simple_pdf::{BuiltinFont, FontSource, Pdf};
 fn main() {
     let mut document = Pdf::create("text.pdf").unwrap();
     document.set_title("Text example");
-    // let h: Pt = Mm(297.0).into();
-    // let w: Pt = Mm(210.0).into();
-    let h: Pt = Mm(297.0).into();
-    let w: Pt = Mm(210.0).into();
+
+    let h = Mm(297.0);
+    let w = Mm(210.0);
+
     document
         .render_page(w, h, |c| {
             c.set_stroke_color(Color::rgb(200, 200, 255))?;

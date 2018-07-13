@@ -2,7 +2,6 @@
 extern crate simple_pdf;
 
 use simple_pdf::graphicsstate::{Color, Matrix};
-use simple_pdf::units::Pt;
 use simple_pdf::Pdf;
 use std::env;
 use std::f32::consts::PI;
@@ -16,7 +15,7 @@ fn main() {
 
     // Render a page with something resembling a mandala on it.
     document
-        .render_page(Pt(600.0), Pt(600.0), |c| {
+        .render_page(600.0, 600.0, |c| {
             c.concat(&Matrix::translate(300., 300.))?;
             c.set_stroke_color(Color::gray(0))?;
             let segment = 2. * PI / n as f32;

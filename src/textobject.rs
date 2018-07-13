@@ -16,10 +16,9 @@ use std::io::{self, Write};
 /// ```
 /// # use simple_pdf::{Pdf, BuiltinFont, FontSource};
 /// # use simple_pdf::graphicsstate::Matrix;
-/// # use simple_pdf::units::Pt;
 /// 
 /// # let mut document = Pdf::create("foo.pdf").unwrap();
-/// # document.render_page(Pt(180.0), Pt(240.0), |canvas| {
+/// # document.render_page(180.0, 240.0, |canvas| {
 /// let serif = canvas.get_font(&BuiltinFont::Times_Roman.into());
 /// // t will be a TextObject
 /// canvas.text(|t| {
@@ -139,10 +138,9 @@ impl<'a> TextObject<'a> {
     /// ```
     /// # use simple_pdf::{Pdf, BuiltinFont, FontSource};
     /// # use simple_pdf::graphicsstate::Matrix;
-    /// # use simple_pdf::units::Pt;
     /// 
     /// # let mut document = Pdf::create("foo.pdf").unwrap();
-    /// # document.render_page(Pt(180.0), Pt(240.0), |canvas| {
+    /// # document.render_page(180.0, 240.0, |canvas| {
     /// # let serif = canvas.get_font(&BuiltinFont::Times_Roman.into());
     /// # canvas.text(|t| {
     /// #    t.set_font(&serif, 14.0)?;

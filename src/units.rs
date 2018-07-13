@@ -27,6 +27,18 @@ impl From<Mm> for Pt {
     }
 }
 
+impl From<f32> for Pt {
+    fn from(value: f32) -> Pt {
+        Pt(value)
+    }
+}
+
+impl From<Pt> for f32 {
+    fn from(value: Pt) -> f32 {
+        value.0
+    }
+}
+
 impl fmt::Display for Pt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.0)
@@ -41,6 +53,18 @@ pub struct Mm(pub f32);
 impl From<Pt> for Mm {
     fn from(value: Pt) -> Mm {
         Mm(value.0 * PT_TO_MM)
+    }
+}
+
+impl From<f32> for Mm {
+    fn from(value: f32) -> Mm {
+        Mm(value)
+    }
+}
+
+impl From<Mm> for f32 {
+    fn from(value: Mm) -> f32 {
+        Pt::from(value).0
     }
 }
 
@@ -64,5 +88,9 @@ impl Px {
     /// Returns the value in millimeters with given dpi.
     pub fn to_mm(self, dpi: f32) -> Mm {
         Mm::from(self.to_pt(dpi))
+    }
+    /// Returns the value as floating point with given dpi.
+    pub fn to_fp(self, dpi: f32) -> f32 {
+        self.to_pt(dpi).0
     }
 }

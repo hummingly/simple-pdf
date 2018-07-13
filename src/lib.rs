@@ -10,7 +10,6 @@
 //! ```
 //! use simple_pdf::{Pdf, BuiltinFont, FontSource};
 //! use simple_pdf::graphicsstate::Color;
-//! use simple_pdf::units::Pt;
 //!
 //! let mut document = Pdf::create("example.pdf")
 //!     .expect("Create pdf file");
@@ -18,7 +17,7 @@
 //! let font = FontSource::from(BuiltinFont::Times_Roman);
 //!
 //! // Add a page to the document.  This page will be 180 by 240 pt large.
-//! document.render_page(Pt(180.0), Pt(240.0), |canvas| {
+//! document.render_page(180.0, 240.0, |canvas| {
 //!     // This closure defines the content of the page
 //!     let hello = "Hello World!";
 //!     let w = font.text_width(24.0, hello) + 8.0;
@@ -81,7 +80,6 @@ mod textobject;
 pub use textobject::TextObject;
 
 pub mod units;
-use units::Pt;
 
 /// The top-level object for writing a PDF.
 ///
@@ -171,7 +169,7 @@ impl Pdf {
     pub fn render_page<F, U>(&mut self, width: U, height: U, render_contents: F) -> io::Result<()>
     where
         F: FnOnce(&mut Canvas) -> io::Result<()>,
-        U: Into<Pt>,
+        U: Into<f32>,
     {
         let (contents_object_id, content_length, fonts, outline_items) =
             self.write_new_object(move |contents_object_id, pdf| {
@@ -229,8 +227,8 @@ impl Pdf {
     fn write_page_dict(
         &mut self,
         content_oid: usize,
-        width: Pt,
-        height: Pt,
+        width: f32,
+        height: f32,
         font_oids: &NamedRefs,
     ) -> io::Result<usize> {
         self.write_new_object(|page_oid, pdf| {
