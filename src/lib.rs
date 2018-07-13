@@ -10,6 +10,7 @@
 //! ```
 //! use simple_pdf::{Pdf, BuiltinFont, FontSource};
 //! use simple_pdf::graphicsstate::Color;
+//! use simple_pdf::units::Pt;
 //!
 //! let mut document = Pdf::create("example.pdf")
 //!     .expect("Create pdf file");
@@ -17,15 +18,15 @@
 //! let font = FontSource::from(BuiltinFont::Times_Roman);
 //!
 //! // Add a page to the document.  This page will be 180 by 240 pt large.
-//! document.render_page(180.0, 240.0, |canvas| {
+//! document.render_page(Pt(180.0), Pt(240.0), |canvas| {
 //!     // This closure defines the content of the page
 //!     let hello = "Hello World!";
 //!     let w = font.text_width(24.0, hello) + 8.0;
 //!
 //!     // Some simple graphics
-//!     try!(canvas.set_stroke_color(Color::rgb(0, 0, 248)));
-//!     try!(canvas.rectangle(90.0 - w / 2.0, 194.0, w, 26.0));
-//!     try!(canvas.stroke());
+//!     canvas.set_stroke_color(Color::rgb(0, 0, 248))?;
+//!     canvas.rectangle(90.0 - w / 2.0, 194.0, w, 26.0)?;
+//!     canvas.stroke()?;
 //!
 //!     // Some text
 //!     canvas.center_text(90.0, 200.0, &font, 24.0, hello)

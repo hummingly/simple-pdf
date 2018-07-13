@@ -16,84 +16,85 @@ fn main() {
     let w: Pt = Mm(210.0).into();
     document
         .render_page(w, h, |c| {
-            try!(c.set_stroke_color(Color::rgb(200, 200, 255)));
-            try!(c.rectangle(10.0, 10.0, w.0 - 20.0, h.0 - 20.0));
-            try!(c.line(10.0, h.0 / 2.0, w.0 - 10.0, h.0 / 2.0));
-            try!(c.line(w.0 / 2.0, 10.0, w.0 / 2.0, h.0 - 10.0));
-            try!(c.stroke());
+            c.set_stroke_color(Color::rgb(200, 200, 255))?;
+            c.rectangle(10.0, 10.0, w.0 - 20.0, h.0 - 20.0)?;
+            c.line(10.0, h.0 / 2.0, w.0 - 10.0, h.0 / 2.0)?;
+            c.line(w.0 / 2.0, 10.0, w.0 / 2.0, h.0 - 10.0)?;
+            c.stroke()?;
             let helvetica = FontSource::from(BuiltinFont::Helvetica);
-            try!(c.left_text(10.0, h.0 - 20.0, &helvetica, 12.0, "Top left"));
-            try!(c.left_text(10.0, 10.0, &helvetica, 12.0, "Bottom left"));
-            try!(c.right_text(w.0 - 10.0, h.0 - 20.0, &helvetica, 12.0, "Top right"));
-            try!(c.right_text(w.0 - 10.0, 10.0, &helvetica, 12.0, "Bottom right"));
-            try!(c.center_text(
+            c.left_text(10.0, h.0 - 20.0, &helvetica, 12.0, "Top left")?;
+            c.left_text(10.0, 10.0, &helvetica, 12.0, "Bottom left")?;
+            c.right_text(w.0 - 10.0, h.0 - 20.0, &helvetica, 12.0, "Top right")?;
+            c.right_text(w.0 - 10.0, 10.0, &helvetica, 12.0, "Bottom right")?;
+            c.center_text(
                 w.0 / 2.0,
                 h.0 - 30.0,
                 &BuiltinFont::Times_Bold.into(),
                 24.0,
                 "Centered"
-            ));
+            )?;
             let times = c.get_font(&BuiltinFont::Times_Roman.into());
-            try!(c.text(|t| {
-                try!(t.set_font(&times, 14.0));
-                try!(t.set_leading(18.0));
-                try!(t.pos(10.0, h.0 - 100.0));
-                try!(t.show("Some lines of text in what might look like a"));
-                try!(t.show_line("paragraph of three lines. Lorem ipsum dolor"));
-                try!(t.show_line("sit amet. Blahonga. "));
-                try!(t.show_adjusted(&[("W", 130), ("AN", -40), ("D", 0)]));
-                try!(t.pos(0., -30.));
+            c.text(|t| {
+                t.set_font(&times, 14.0)?;
+                t.set_leading(18.0)?;
+                t.pos(10.0, h.0 - 100.0)?;
+                t.show("Some lines of text in what might look like a")?;
+                t.show_line("paragraph of three lines. Lorem ipsum dolor")?;
+                t.show_line("sit amet. Blahonga. ")?;
+                t.show_adjusted(&[("W", 130), ("AN", -40), ("D", 0)])?;
+                t.pos(0., -30.)?;
                 t.show_adjusted(&(-19..21).map(|i| ("o", 16 * i)).collect::<Vec<_>>())
-            }));
+            })?;
 
             //In Swedish, we use the letters å, ä, and ö
             //in words like sloe liqueur.  That is why rust-pdf
             //uses /WinAnsiEncoding for text.
             let times_italic = FontSource::from(BuiltinFont::Times_Italic);
-            try!(c.right_text(
+            c.right_text(
                 w.0 - 10.0,
                 500.0,
                 &times_italic,
                 14.0,
                 "På svenska använder vi bokstäverna å, ä & ö"
-            ));
-            try!(c.right_text(
+            )?;
+            c.right_text(
                 w.0 - 10.0,
                 480.0,
                 &times_italic,
                 14.0,
                 "i ord som slånbärslikör. Därför använder"
-            ));
-            try!(c.right_text(
+            )?;
+
+            c.right_text(
                 w.0 - 10.0,
                 460.0,
                 &times_italic,
                 14.0,
                 "rust-pdf /WinAnsiEncoding för text."
-            ));
+            )?;
 
-            try!(c.center_text(
+            c.center_text(
                 w.0 / 2.0,
                 400.0,
                 &BuiltinFont::Symbol.into(),
                 14.0,
                 "Hellas ΑΒΓΔαβγδ"
-            ));
-            try!(c.center_text(
+            )?;
+            c.center_text(
                 w.0 / 2.0,
                 380.0,
                 &BuiltinFont::Symbol.into(),
                 14.0,
                 "∀ μ < δ : ∃ σ ∈ Σ"
-            ));
+            )?;
 
-            try!(c.center_text(
+            c.center_text(
                 w.0 / 2.0,
                 320.0,
                 &BuiltinFont::ZapfDingbats.into(),
                 18.0,
                 "☎  ✌  ✖  ✤  ✰ ✴  ❐  ❝  ❤  ❞"
-            ));
+            )?;
             Ok(())
         })
         .unwrap();

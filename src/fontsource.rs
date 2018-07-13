@@ -127,7 +127,7 @@ impl FontSource {
     /// let proportional = FontSource::from(BuiltinFont::Helvetica);
     /// assert_eq!(62.004, proportional.text_width(12.0, "Hello World"));
     /// let fixed = FontSource::from(BuiltinFont::Courier);
-    /// assert_eq!(60.0, fixed.width(10.0, "0123456789"));
+    /// assert_eq!(60.0, fixed.text_width(10.0, "0123456789"));
     /// ```
     pub fn text_width(&self, size: f32, text: &str) -> f32 {
         size * self.raw_text_width(text) as f32 / 1000.0

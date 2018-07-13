@@ -77,15 +77,16 @@ impl Color {
 /// ```
 /// # use simple_pdf::{Pdf, BuiltinFont, FontSource};
 /// # use simple_pdf::graphicsstate::Matrix;
+/// use simple_pdf::units::Pt;
 /// # let mut document: Pdf = Pdf::create("foo.pdf").unwrap();
-/// # document.render_page(180.0, 240.0, |canvas| {
-/// try!(canvas.concat(Matrix::translate(10.0, 24.0)));
+/// # document.render_page(Pt(180.0), Pt(240.0), |canvas| {
+/// canvas.concat(&Matrix::translate(10.0, 24.0))?;
 ///
 /// // Matrixes can be combined by multiplication:
-/// try!(canvas.concat(Matrix::translate(7.0, 0.0) * Matrix::rotate_deg(45.0)));
+/// canvas.concat(&(Matrix::translate(7.0, 0.0) * Matrix::rotate_deg(45.0)))?;
 /// // ... will be visualy identical to:
-/// try!(canvas.concat(Matrix::translate(7.0, 0.0)));
-/// try!(canvas.concat(Matrix::rotate_deg(45.0)));
+/// canvas.concat(&Matrix::translate(7.0, 0.0))?;
+/// canvas.concat(&Matrix::rotate_deg(45.0))?;
 /// # Ok(())
 /// # }).unwrap();
 /// # document.finish().unwrap();

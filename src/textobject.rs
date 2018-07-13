@@ -16,19 +16,21 @@ use std::io::{self, Write};
 /// ```
 /// # use simple_pdf::{Pdf, BuiltinFont, FontSource};
 /// # use simple_pdf::graphicsstate::Matrix;
+/// # use simple_pdf::units::Pt;
+/// 
 /// # let mut document = Pdf::create("foo.pdf").unwrap();
-/// # document.render_page(180.0, 240.0, |canvas| {
+/// # document.render_page(Pt(180.0), Pt(240.0), |canvas| {
 /// let serif = canvas.get_font(&BuiltinFont::Times_Roman.into());
 /// // t will be a TextObject
-/// try!(canvas.text(|t| {
-///     try!(t.set_font(&serif, 14.0));
-///     try!(t.set_leading(18.0));
-///     try!(t.pos(10.0, 300.0));
-///     try!(t.show("Some lines of text in what might look like a"));
-///     try!(t.show_line("paragraph of three lines. Lorem ipsum dolor"));
-///     try!(t.show_line("sit amet. Blahonga."));
+/// canvas.text(|t| {
+///     t.set_font(&serif, 14.0)?;
+///     t.set_leading(18.0)?;
+///     t.pos(10.0, 300.0)?;
+///     t.show("Some lines of text in what might look like a")?;
+///     t.show_line("paragraph of three lines. Lorem ipsum dolor")?;
+///     t.show_line("sit amet. Blahonga.")?;
 ///     Ok(())
-/// }));
+/// })?;
 /// # Ok(())
 /// # }).unwrap();
 /// # document.finish().unwrap();
@@ -137,11 +139,13 @@ impl<'a> TextObject<'a> {
     /// ```
     /// # use simple_pdf::{Pdf, BuiltinFont, FontSource};
     /// # use simple_pdf::graphicsstate::Matrix;
+    /// # use simple_pdf::units::Pt;
+    /// 
     /// # let mut document = Pdf::create("foo.pdf").unwrap();
-    /// # document.render_page(180.0, 240.0, |canvas| {
+    /// # document.render_page(Pt(180.0), Pt(240.0), |canvas| {
     /// # let serif = canvas.get_font(&BuiltinFont::Times_Roman.into());
     /// # canvas.text(|t| {
-    /// #    try!(t.set_font(&serif, 14.0));
+    /// #    t.set_font(&serif, 14.0)?;
     /// t.show_adjusted(&[("W", 130), ("AN", -40), ("D", 0)])
     /// # })
     /// # }).unwrap();
