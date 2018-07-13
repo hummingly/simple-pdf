@@ -1,9 +1,9 @@
 //! Example program drawing some text on a page.
-extern crate pdf_canvas;
+extern crate simple_pdf;
 
-use pdf_canvas::graphicsstate::Color;
-use pdf_canvas::units::{Mm, Pt};
-use pdf_canvas::{BuiltinFont, FontSource, Pdf};
+use simple_pdf::graphicsstate::Color;
+use simple_pdf::units::{Mm, Pt};
+use simple_pdf::{BuiltinFont, FontSource, Pdf};
 
 /// Create a `text.pdf` file, with a single page containg some
 /// text lines positioned in various ways on some helper lines.

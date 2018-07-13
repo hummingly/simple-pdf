@@ -1,6 +1,6 @@
-extern crate pdf_canvas;
+extern crate simple_pdf;
 
-use pdf_canvas::{BuiltinFont, FontSource};
+use simple_pdf::{BuiltinFont, FontSource};
 
 fn is_close(a: f32, b: f32) -> bool {
     let comparision = (a - b).abs() / (a.abs() + b.abs());

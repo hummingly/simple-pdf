@@ -107,7 +107,7 @@ impl FontSource {
     ///
     /// # Examples
     /// ```
-    /// use pdf_canvas::{BuiltinFont, FontSource};
+    /// use simple_pdf::{BuiltinFont, FontSource};
     /// assert_eq!("Times-Roman", FontSource::from(BuiltinFont::Times_Roman).name());
     /// ```
     pub fn name(&self) -> String {
@@ -123,7 +123,7 @@ impl FontSource {
     ///
     /// # Examples
     /// ```
-    /// use pdf_canvas::{BuiltinFont, FontSource};
+    /// use simple_pdf::{BuiltinFont, FontSource};
     /// let proportional = FontSource::from(BuiltinFont::Helvetica);
     /// assert_eq!(62.004, proportional.text_width(12.0, "Hello World"));
     /// let fixed = FontSource::from(BuiltinFont::Courier);
@@ -138,7 +138,7 @@ impl FontSource {
     ///
     /// # Examples
     /// ```
-    /// use pdf_canvas::{BuiltinFont, FontSource};
+    /// use simple_pdf::{BuiltinFont, FontSource};
     /// assert_eq!(5167, FontSource::from(BuiltinFont::Helvetica).raw_text_width("Hello World"));
     /// assert_eq!(600, FontSource::from(BuiltinFont::Courier).raw_text_width("A"));
     /// ```

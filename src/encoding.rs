@@ -13,7 +13,7 @@ use std::collections::BTreeMap;
 ///
 /// # Example
 /// ````
-/// use pdf_canvas::{BuiltinFont, FontSource};
+/// use simple_pdf::{BuiltinFont, FontSource};
 /// assert_eq!("WinAnsiEncoding",
 ///            FontSource::from(BuiltinFont::Helvetica).encoding().name());
 /// assert_eq!("SymbolEncoding",
@@ -122,7 +122,7 @@ impl BaseEncoding {
 ///
 /// # Example
 /// ````
-/// use pdf_canvas::{BuiltinFont, FontSource};
+/// use simple_pdf::{BuiltinFont, FontSource};
 /// assert_eq!("WinAnsiEncoding",
 ///            FontSource::from(BuiltinFont::Helvetica).encoding().name());
 /// assert_eq!("SymbolEncoding",
@@ -160,7 +160,7 @@ impl Encoding {
     ///
     /// # Example
     /// ````
-    /// use pdf_canvas::{BuiltinFont, FontSource};
+    /// use simple_pdf::{BuiltinFont, FontSource};
     /// let enc = FontSource::from(BuiltinFont::Helvetica).encoding();
     /// assert_eq!(Some(32),  enc.get_code("space"));
     /// assert_eq!(Some(65),  enc.get_code("A"));
@@ -179,7 +179,7 @@ impl Encoding {
     /// Convert a rust string to a vector of bytes in the encoding.
     /// # Example
     /// ````
-    /// use pdf_canvas::{BuiltinFont, FontSource};
+    /// use simple_pdf::{BuiltinFont, FontSource};
     /// let enc = FontSource::from(BuiltinFont::Helvetica).encoding();
     /// let symb_enc = FontSource::from(BuiltinFont::Symbol).encoding();
     /// assert_eq!(vec!(65, 66, 67), enc.encode_string("ABC"));
