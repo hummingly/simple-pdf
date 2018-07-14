@@ -49,7 +49,7 @@ impl BuiltinFont {
 
 impl From<BuiltinFont> for FontSource {
     fn from(font: BuiltinFont) -> Self {
-        let metrics = get_builtin_metrics(&font).clone();
+        let metrics = get_builtin_metrics(font).clone();
         let encoding = match font {
             Symbol => FontEncoding::with_encoding(SYMBOL_ENCODING.clone()),
             ZapfDingbats => FontEncoding::with_encoding(ZAPFDINGBATS_ENCODING.clone()),

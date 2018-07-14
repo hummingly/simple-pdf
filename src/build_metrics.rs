@@ -57,9 +57,9 @@ fn main() {
     ];
     writeln!(
         f,
-        "pub fn get_builtin_metrics(font: &BuiltinFont) \
+        "pub fn get_builtin_metrics(font: BuiltinFont) \
          -> &'static FontMetrics {{\n\
-         match *font {{"
+         match font {{"
     ).expect("Could not write to file.");
     for font in textfonts.iter() {
         writeln!(

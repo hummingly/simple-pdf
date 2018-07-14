@@ -136,9 +136,9 @@ impl<'a> Canvas<'a> {
         let bot = y + r;
         let left = x - r;
         let right = x + r;
-        // let curve = 0.551_915_024_494;
+        // actual value 0.551_915_024_494;
         // f32 truncates value
-        let curve = 0.551_915_025;
+        let curve = 0.551_915_05;
         let leftp = x - (r * curve);
         let rightp = x + (r * curve);
         let tp = y - (r * curve);
