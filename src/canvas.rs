@@ -133,21 +133,22 @@ impl<'a> Canvas<'a> {
     /// http://spencermortensen.com/articles/bezier-circle/
     pub fn circle(&mut self, x: f32, y: f32, r: f32) -> io::Result<()> {
         let top = y - r;
-        let bot = y + r;
+        let bottom = y + r;
         let left = x - r;
         let right = x + r;
         // actual value 0.551_915_024_494;
         // f32 truncates value
-        let curve = 0.551_915_05;
-        let leftp = x - (r * curve);
-        let rightp = x + (r * curve);
-        let tp = y - (r * curve);
-        let bp = y + (r * curve);
+        let c = 0.551_915_05;
+        let dist = r * c;
+        let up = y - dist;
+        let down = y + dist;
+        let leftp = x - dist;
+        let rightp = x + dist;
         self.move_to(x, top)?;
-        self.curve_to(leftp, top, left, tp, left, y)?;
-        self.curve_to(left, bp, leftp, bot, x, bot)?;
-        self.curve_to(rightp, bot, right, bp, right, y)?;
-        self.curve_to(right, tp, rightp, top, x, top)?;
+        self.curve_to(leftp, top, left, up, left, y)?;
+        self.curve_to(left, down, leftp, bottom, x, bottom)?;
+        self.curve_to(rightp, bottom, right, down, right, y)?;
+        self.curve_to(right, up, rightp, top, x, top)?;
         Ok(())
     }
     /// Stroke the current path.
@@ -167,9 +168,7 @@ impl<'a> Canvas<'a> {
         let next_n = self.fonts.len();
         self.fonts
             .entry(font.clone())
-            .or_insert_with(|| {
-                FontRef::new(next_n, font.encoding(), Arc::new(font.metrics()))
-            })
+            .or_insert_with(|| FontRef::new(next_n, font.encoding(), Arc::new(font.metrics())))
             .clone()
     }
 
@@ -188,7 +187,7 @@ impl<'a> Canvas<'a> {
         writeln!(self.output, "ET")?;
         Ok(result)
     }
-    /// Utility method for placing a string of text.
+    /// f32tility method for placing a string of text.
     pub fn left_text(
         &mut self,
         x: f32,
@@ -204,7 +203,7 @@ impl<'a> Canvas<'a> {
             t.show(text)
         })
     }
-    /// Utility method for placing a string of text.
+    /// f32tility method for placing a string of text.
     pub fn right_text(
         &mut self,
         x: f32,
@@ -221,7 +220,7 @@ impl<'a> Canvas<'a> {
             t.show(text)
         })
     }
-    /// Utility method for placing a string of text.
+    /// f32tility method for placing a string of text.
     pub fn center_text(
         &mut self,
         x: f32,

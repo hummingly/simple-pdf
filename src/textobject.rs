@@ -16,7 +16,7 @@ use std::io::{self, Write};
 /// ```
 /// # use simple_pdf::{Pdf, BuiltinFont, FontSource};
 /// # use simple_pdf::graphicsstate::Matrix;
-/// 
+///
 /// # let mut document = Pdf::create("foo.pdf").unwrap();
 /// # document.render_page(180.0, 240.0, |canvas| {
 /// let serif = canvas.get_font(&BuiltinFont::Times_Roman.into());
@@ -42,7 +42,7 @@ pub struct TextObject<'a> {
 use self::BaseEncoding::*;
 impl<'a> TextObject<'a> {
     // Should not be called by user code.
-    pub(crate) fn new(output: &'a mut Write) -> TextObject<'a> {
+    pub(crate) fn new(output: &mut Write) -> TextObject {
         TextObject {
             output,
             encoding: if cfg!(target_os = "macos") {
@@ -138,7 +138,7 @@ impl<'a> TextObject<'a> {
     /// ```
     /// # use simple_pdf::{Pdf, BuiltinFont, FontSource};
     /// # use simple_pdf::graphicsstate::Matrix;
-    /// 
+    ///
     /// # let mut document = Pdf::create("foo.pdf").unwrap();
     /// # document.render_page(180.0, 240.0, |canvas| {
     /// # let serif = canvas.get_font(&BuiltinFont::Times_Roman.into());

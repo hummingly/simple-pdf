@@ -1,9 +1,10 @@
-//! Types for units in PDF files in points, millimeters and pixels (wrappers 
+//! Types for units in PDF files in points, millimeters and pixels (wrappers
 //! around floating points).
-//! By default points are used but also offers the possibilty 
+//! By default points are used but also offers the possibilty
 //! to use other metrics.
 
 use std::fmt;
+use std::ops::{Add, Sub};
 
 const MM_TO_PT: f32 = 2.834_646;
 const PT_TO_MM: f32 = 0.352_778;
@@ -27,12 +28,6 @@ impl From<Mm> for Pt {
     }
 }
 
-impl From<f32> for Pt {
-    fn from(value: f32) -> Pt {
-        Pt(value)
-    }
-}
-
 impl From<Pt> for f32 {
     fn from(value: Pt) -> f32 {
         value.0
@@ -45,20 +40,53 @@ impl fmt::Display for Pt {
     }
 }
 
+impl Add for Pt {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Pt(self.0 + other.0)
+    }
+}
+
+impl Sub for Pt {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Pt(self.0 - other.0)
+    }
+}
+
+impl<'a> Add for &'a Pt {
+    type Output = Pt;
+
+    fn add(self, other: Self) -> Pt {
+        Pt(self.0 + other.0)
+    }
+}
+
+impl<'a> Sub for &'a Pt {
+    type Output = Pt;
+
+    fn sub(self, other: Self) -> Pt {
+        Pt(self.0 - other.0)
+    }
+}
+
 /// Represents millimeters in a Pdf. Millimeters can be converted from
 /// and into points and to pixels.
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Mm(pub f32);
 
-impl From<Pt> for Mm {
-    fn from(value: Pt) -> Mm {
-        Mm(value.0 * PT_TO_MM)
+impl Mm {
+    /// Returns the value in pixels with given dpi.
+    pub fn to_px(self, dpi: f32) -> Px {
+        Px(f32::round(Pt::from(self).0 / PX_TO_PT * dpi) as usize)
     }
 }
 
-impl From<f32> for Mm {
-    fn from(value: f32) -> Mm {
-        Mm(value)
+impl From<Pt> for Mm {
+    fn from(value: Pt) -> Mm {
+        Mm(value.0 * PT_TO_MM)
     }
 }
 
@@ -68,14 +96,39 @@ impl From<Mm> for f32 {
     }
 }
 
-impl Mm {
-    /// Returns the value in pixels with given dpi.
-    pub fn to_px(self, dpi: f32) -> Px {
-        Px(f32::round(Pt::from(self).0 / PX_TO_PT * dpi) as usize)
+impl Add for Mm {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Mm(self.0 + other.0)
     }
 }
 
-/// Pixels are measured in a different way. For pixels dpi 
+impl Sub for Mm {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Mm(self.0 - other.0)
+    }
+}
+
+impl<'a> Add for &'a Mm {
+    type Output = Mm;
+
+    fn add(self, other: Self) -> Mm {
+        Mm(self.0 + other.0)
+    }
+}
+
+impl<'a> Sub for &'a Mm {
+    type Output = Mm;
+
+    fn sub(self, other: Self) -> Mm {
+        Mm(self.0 - other.0)
+    }
+}
+
+/// Pixels are measured in a different way. For pixels dpi
 /// (dots per inches) have to be defined.
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Px(pub usize);

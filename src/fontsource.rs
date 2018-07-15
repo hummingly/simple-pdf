@@ -64,7 +64,7 @@ impl From<BuiltinFont> for FontSource {
 }
 
 /// Defines a font dictionary to represent text in specified font.
-/// At the moment, FontSource only supports Type1 fonts, e.g. 
+/// At the moment, FontSource only supports Type1 fonts, e.g.
 /// the standard fonts (see BuiltinFont).
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct FontSource {

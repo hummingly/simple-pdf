@@ -2,7 +2,7 @@
 extern crate simple_pdf;
 
 use simple_pdf::graphicsstate::Color;
-use simple_pdf::units::Mm;
+use simple_pdf::units::{Mm, Pt};
 use simple_pdf::{BuiltinFont, FontSource, Pdf};
 
 /// Create a `text.pdf` file, with a single page containg some
@@ -11,11 +11,11 @@ fn main() {
     let mut document = Pdf::create("text.pdf").unwrap();
     document.set_title("Text example");
 
-    let h = Mm(297.0);
-    let w = Mm(210.0);
+    let h: Pt = Mm(297.0).into();
+    let w: Pt = Mm(210.0).into();
 
     document
-        .render_page(w, h, |c| {
+        .render_page(Mm(210.0), Mm(297.0), |c| {
             c.set_stroke_color(Color::rgb(200, 200, 255))?;
             c.rectangle(10.0, 10.0, w.0 - 20.0, h.0 - 20.0)?;
             c.line(10.0, h.0 / 2.0, w.0 - 10.0, h.0 / 2.0)?;
@@ -31,7 +31,7 @@ fn main() {
                 h.0 - 30.0,
                 &BuiltinFont::Times_Bold.into(),
                 24.0,
-                "Centered"
+                "Centered",
             )?;
             let times = c.get_font(&BuiltinFont::Times_Roman.into());
             c.text(|t| {
@@ -55,14 +55,14 @@ fn main() {
                 500.0,
                 &times_italic,
                 14.0,
-                "På svenska använder vi bokstäverna å, ä & ö"
+                "På svenska använder vi bokstäverna å, ä & ö",
             )?;
             c.right_text(
                 w.0 - 10.0,
                 480.0,
                 &times_italic,
                 14.0,
-                "i ord som slånbärslikör. Därför använder"
+                "i ord som slånbärslikör. Därför använder",
             )?;
 
             c.right_text(
@@ -70,7 +70,7 @@ fn main() {
                 460.0,
                 &times_italic,
                 14.0,
-                "rust-pdf /WinAnsiEncoding för text."
+                "rust-pdf /WinAnsiEncoding för text.",
             )?;
 
             c.center_text(
@@ -78,14 +78,14 @@ fn main() {
                 400.0,
                 &BuiltinFont::Symbol.into(),
                 14.0,
-                "Hellas ΑΒΓΔαβγδ"
+                "Hellas ΑΒΓΔαβγδ",
             )?;
             c.center_text(
                 w.0 / 2.0,
                 380.0,
                 &BuiltinFont::Symbol.into(),
                 14.0,
-                "∀ μ < δ : ∃ σ ∈ Σ"
+                "∀ μ < δ : ∃ σ ∈ Σ",
             )?;
 
             c.center_text(
@@ -93,7 +93,7 @@ fn main() {
                 320.0,
                 &BuiltinFont::ZapfDingbats.into(),
                 18.0,
-                "☎  ✌  ✖  ✤  ✰ ✴  ❐  ❝  ❤  ❞"
+                "☎  ✌  ✖  ✤  ✰ ✴  ❐  ❝  ❤  ❞",
             )?;
             Ok(())
         })
