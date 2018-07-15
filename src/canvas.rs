@@ -187,7 +187,7 @@ impl<'a> Canvas<'a> {
         writeln!(self.output, "ET")?;
         Ok(result)
     }
-    /// f32tility method for placing a string of text.
+    /// Utility method for placing a string of text.
     pub fn left_text(
         &mut self,
         x: f32,
@@ -203,7 +203,7 @@ impl<'a> Canvas<'a> {
             t.show(text)
         })
     }
-    /// f32tility method for placing a string of text.
+    /// Utility method for placing a string of text.
     pub fn right_text(
         &mut self,
         x: f32,
@@ -220,7 +220,7 @@ impl<'a> Canvas<'a> {
             t.show(text)
         })
     }
-    /// f32tility method for placing a string of text.
+    /// Utility method for placing a string of text.
     pub fn center_text(
         &mut self,
         x: f32,
