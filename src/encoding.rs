@@ -15,9 +15,9 @@ use std::collections::BTreeMap;
 /// ````
 /// use simple_pdf::{BuiltinFont, FontSource};
 /// assert_eq!("WinAnsiEncoding",
-///            FontSource::from(BuiltinFont::Helvetica).encoding().name());
+///            BuiltinFont::Helvetica.encoding().name());
 /// assert_eq!("SymbolEncoding",
-///            FontSource::from(BuiltinFont::Symbol).encoding().name());
+///            BuiltinFont::Symbol.encoding().name());
 /// ````
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct FontEncoding {
@@ -97,8 +97,8 @@ pub enum BaseEncoding {
 }
 
 impl BaseEncoding {
-    pub fn to_encoding(&self) -> &'static Encoding {
-        match *self {
+    pub fn to_encoding(self) -> &'static Encoding {
+        match self {
             WinAnsiEncoding => &WIN_ANSI_ENCODING,
             MacRomanEncoding => &MAC_ROMAN_ENCODING,
             // MacExpertEncoding => &MAC_EXPERT_ENCODING,
@@ -124,9 +124,9 @@ impl BaseEncoding {
 /// ````
 /// use simple_pdf::{BuiltinFont, FontSource};
 /// assert_eq!("WinAnsiEncoding",
-///            FontSource::from(BuiltinFont::Helvetica).encoding().name());
+///            BuiltinFont::Helvetica.encoding().name());
 /// assert_eq!("SymbolEncoding",
-///            FontSource::from(BuiltinFont::Symbol).encoding().name());
+///            BuiltinFont::Symbol.encoding().name());
 /// ````
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Encoding {
@@ -161,7 +161,7 @@ impl Encoding {
     /// # Example
     /// ````
     /// use simple_pdf::{BuiltinFont, FontSource};
-    /// let enc = FontSource::from(BuiltinFont::Helvetica).encoding();
+    /// let enc = BuiltinFont::Helvetica.encoding();
     /// assert_eq!(Some(32),  enc.get_code("space"));
     /// assert_eq!(Some(65),  enc.get_code("A"));
     /// assert_eq!(Some(229), enc.get_code("aring"));
@@ -181,8 +181,8 @@ impl Encoding {
     ///
     /// # Example
     /// ````
-    /// use pdf_canvas::{BuiltinFont, FontSource};
-    /// let enc = BuiltinFont::Helvetica.get_encoding();
+    /// use simple_pdf::{BuiltinFont, FontSource};
+    /// let enc = BuiltinFont::Helvetica.encoding();
     /// assert_eq!(Some(b' '),  enc.encode_char(' '));
     /// assert_eq!(Some(b'A'),  enc.encode_char('A'));
     /// assert_eq!(Some(b'\\'),  enc.encode_char('\\'));
@@ -199,8 +199,8 @@ impl Encoding {
     /// # Example
     /// ````
     /// use simple_pdf::{BuiltinFont, FontSource};
-    /// let enc = FontSource::from(BuiltinFont::Helvetica).encoding();
-    /// let symb_enc = FontSource::from(BuiltinFont::Symbol).encoding();
+    /// let enc = BuiltinFont::Helvetica.encoding();
+    /// let symb_enc = BuiltinFont::Symbol.encoding();
     /// assert_eq!(vec!(65, 66, 67), enc.encode_string("ABC"));
     /// assert_eq!(vec!(82, 228, 107, 115, 109, 246, 114, 103, 229, 115),
     ///            enc.encode_string("Räksmörgås"));

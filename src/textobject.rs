@@ -2,6 +2,7 @@ use encoding::{BaseEncoding, Encoding};
 use fontref::FontRef;
 use graphicsstate::Color;
 use std::io::{self, Write};
+use units::Pt;
 
 /// A text object is where text is put on the canvas.
 ///
@@ -54,30 +55,30 @@ impl<'a> TextObject<'a> {
     }
     /// Set the font and font-size to be used by the following text
     /// operations.
-    pub fn set_font(&mut self, font: &FontRef, size: f32) -> io::Result<()> {
+    pub fn set_font<U: Into<Pt>>(&mut self, font: &FontRef, size: U) -> io::Result<()> {
         self.encoding = font.encoding();
-        writeln!(self.output, "{} {} Tf", font, size)
+        writeln!(self.output, "{} {} Tf", font, size.into())
     }
     /// Set leading, the vertical distance from a line of text to the next.
     /// This is important for the [show_line](#method.show_line) method.
-    pub fn set_leading(&mut self, leading: f32) -> io::Result<()> {
-        writeln!(self.output, "{} TL", leading)
+    pub fn set_leading<U: Into<Pt>>(&mut self, leading: U) -> io::Result<()> {
+        writeln!(self.output, "{} TL", leading.into())
     }
     /// Set the rise above the baseline for coming text.  Calling
     /// set_rise again with a zero argument will get back to the old
     /// baseline.
-    pub fn set_rise(&mut self, rise: f32) -> io::Result<()> {
-        writeln!(self.output, "{} Ts", rise)
+    pub fn set_rise<U: Into<Pt>>(&mut self, rise: U) -> io::Result<()> {
+        writeln!(self.output, "{} Ts", rise.into())
     }
     /// Set the amount of extra space between characters, in 1/1000
     /// text unit.
-    pub fn set_char_spacing(&mut self, a_c: f32) -> io::Result<()> {
-        writeln!(self.output, "{} Tc", a_c)
+    pub fn set_char_spacing<U: Into<Pt>>(&mut self, c_space: U) -> io::Result<()> {
+        writeln!(self.output, "{} Tc", c_space.into())
     }
     /// Set the amount of extra space between words, in 1/1000
     /// text unit.
-    pub fn set_word_spacing(&mut self, a_w: f32) -> io::Result<()> {
-        writeln!(self.output, "{} Tw", a_w)
+    pub fn set_word_spacing<U: Into<Pt>>(&mut self, w_space: U) -> io::Result<()> {
+        writeln!(self.output, "{} Tw", w_space.into())
     }
 
     /// Set color for stroking operations.
@@ -115,8 +116,8 @@ impl<'a> TextObject<'a> {
     /// TextObject, (x, y) refers to the same point as for
     /// [Canvas::move_to](struct.Canvas.html#method.move_to), after that,
     /// the point is relative to the earlier pos.
-    pub fn pos(&mut self, x: f32, y: f32) -> io::Result<()> {
-        writeln!(self.output, "{} {} Td", x, y)
+    pub fn pos<U: Into<Pt>>(&mut self, x: U, y: U) -> io::Result<()> {
+        writeln!(self.output, "{} {} Td", x.into(), y.into())
     }
     /// Show a text.
     pub fn show(&mut self, text: &str) -> io::Result<()> {

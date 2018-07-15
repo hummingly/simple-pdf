@@ -2,6 +2,7 @@ use encoding::Encoding;
 use fontmetrics::FontMetrics;
 use std::fmt;
 use std::sync::Arc;
+use units::Pt;
 
 /// A font ready to be used in a TextObject.
 ///
@@ -39,8 +40,8 @@ impl FontRef {
     }
 
     /// Get the width of the given text in this font at given size.
-    pub fn text_width(&self, size: f32, text: &str) -> f32 {
-        size * self.raw_text_width(text) as f32 / 1000.0
+    pub fn text_width<U: Into<Pt>>(&self, size: U, text: &str) -> Pt {
+        Pt(size.into().0 * self.raw_text_width(text) as f32 / 1000.0)
     }
 
     /// Get the width of the given text in thousands of unit of text

@@ -4,7 +4,7 @@
 //! to use other metrics.
 
 use std::fmt;
-use std::ops::{Add, Sub};
+use std::ops::{Add, Sub, Mul, Div};
 
 const MM_TO_PT: f32 = 2.834_646;
 const PT_TO_MM: f32 = 0.352_778;
@@ -25,6 +25,12 @@ impl Pt {
 impl From<Mm> for Pt {
     fn from(value: Mm) -> Pt {
         Pt(value.0 * MM_TO_PT)
+    }
+}
+
+impl From<f32> for Pt {
+    fn from(value: f32) -> Pt {
+        Pt(value)
     }
 }
 
@@ -56,19 +62,19 @@ impl Sub for Pt {
     }
 }
 
-impl<'a> Add for &'a Pt {
-    type Output = Pt;
+impl Mul for Pt {
+    type Output = Self;
 
-    fn add(self, other: Self) -> Pt {
-        Pt(self.0 + other.0)
+    fn mul(self, other: Self) -> Self {
+        Pt(self.0 * other.0)
     }
 }
 
-impl<'a> Sub for &'a Pt {
-    type Output = Pt;
+impl Div for Pt {
+    type Output = Self;
 
-    fn sub(self, other: Self) -> Pt {
-        Pt(self.0 - other.0)
+    fn div(self, other: Self) -> Self {
+        Pt(self.0 / other.0)
     }
 }
 
@@ -90,12 +96,6 @@ impl From<Pt> for Mm {
     }
 }
 
-impl From<Mm> for f32 {
-    fn from(value: Mm) -> f32 {
-        Pt::from(value).0
-    }
-}
-
 impl Add for Mm {
     type Output = Self;
 
@@ -112,19 +112,19 @@ impl Sub for Mm {
     }
 }
 
-impl<'a> Add for &'a Mm {
-    type Output = Mm;
+impl Mul for Mm {
+    type Output = Self;
 
-    fn add(self, other: Self) -> Mm {
-        Mm(self.0 + other.0)
+    fn mul(self, other: Self) -> Self {
+        Mm(self.0 * other.0)
     }
 }
 
-impl<'a> Sub for &'a Mm {
-    type Output = Mm;
+impl Div for Mm {
+    type Output = Self;
 
-    fn sub(self, other: Self) -> Mm {
-        Mm(self.0 - other.0)
+    fn div(self, other: Self) -> Self {
+        Mm(self.0 / other.0)
     }
 }
 

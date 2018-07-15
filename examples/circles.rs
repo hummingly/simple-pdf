@@ -42,7 +42,7 @@ fn main() {
                 let phi = f32::from(n) * 2.0 * PI / f32::from(sides);
                 c.line_to(x + r * phi.cos(), y + r * phi.sin())?;
             }
-            c.close_and_stroke()
+            c.stroke_and_close()
         })
         .unwrap();
     document.finish().unwrap();

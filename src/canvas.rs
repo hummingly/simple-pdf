@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::io::{self, Write};
 use std::sync::Arc;
 use textobject::TextObject;
+use units::Pt;
 
 /// An visual area where content can be drawn (a page).
 ///
@@ -35,8 +36,15 @@ impl<'a> Canvas<'a> {
     }
     /// Append a closed rectangle with a corner at (x, y) and
     /// extending width × height to the to the current path.
-    pub fn rectangle(&mut self, x: f32, y: f32, width: f32, height: f32) -> io::Result<()> {
-        writeln!(self.output, "{} {} {} {} re", x, y, width, height)
+    pub fn rectangle<U: Into<Pt>>(&mut self, x: U, y: U, width: U, height: U) -> io::Result<()> {
+        writeln!(
+            self.output,
+            "{} {} {} {} re",
+            x.into(),
+            y.into(),
+            width.into(),
+            height.into()
+        )
     }
     /// Set the line join style in the graphics state.
     pub fn set_line_join_style(&mut self, style: JoinStyle) -> io::Result<()> {
@@ -63,8 +71,8 @@ impl<'a> Canvas<'a> {
         )
     }
     /// Set the line width in the graphics state.
-    pub fn set_line_width(&mut self, w: f32) -> io::Result<()> {
-        writeln!(self.output, "{} w", w)
+    pub fn set_line_width<U: Into<Pt>>(&mut self, w: U) -> io::Result<()> {
+        writeln!(self.output, "{} w", w.into())
     }
     /// Set color for stroking operations.
     pub fn set_stroke_color(&mut self, color: Color) -> io::Result<()> {
@@ -102,36 +110,48 @@ impl<'a> Canvas<'a> {
     }
 
     /// Append a straight line from (x1, y1) to (x2, y2) to the current path.
-    pub fn line(&mut self, x1: f32, y1: f32, x2: f32, y2: f32) -> io::Result<()> {
-        self.move_to(x1, y1)?;
-        self.line_to(x2, y2)
-    }
-    /// Begin a new subpath at the point (x, y).
-    pub fn move_to(&mut self, x: f32, y: f32) -> io::Result<()> {
-        write!(self.output, "{} {} m ", x, y)
+    pub fn line<U: Into<Pt>>(&mut self, x1: U, y1: U, x2: U, y2: U) -> io::Result<()> {
+        self.move_to(x1.into(), y1.into())?;
+        self.line_to(x2.into(), y2.into())
     }
     /// Add a straight line from the current point to (x, y) to the
     /// current path.
-    pub fn line_to(&mut self, x: f32, y: f32) -> io::Result<()> {
-        write!(self.output, "{} {} l ", x, y)
+    pub fn line_to<U: Into<Pt>>(&mut self, x: U, y: U) -> io::Result<()> {
+        write!(self.output, "{} {} l ", x.into(), y.into())
+    }
+    /// Begin a new subpath at the point (x, y).
+    pub fn move_to<U: Into<Pt>>(&mut self, x: U, y: U) -> io::Result<()> {
+        write!(self.output, "{} {} m ", x.into(), y.into())
     }
     /// Add an Bézier curve from the current point to (x3, y3) with
     /// (x1, y1) and (x2, y2) as Bézier control points.
-    pub fn curve_to(
+    pub fn curve_to<U: Into<Pt>>(
         &mut self,
-        x1: f32,
-        y1: f32,
-        x2: f32,
-        y2: f32,
-        x3: f32,
-        y3: f32,
+        x1: U,
+        y1: U,
+        x2: U,
+        y2: U,
+        x3: U,
+        y3: U,
     ) -> io::Result<()> {
-        writeln!(self.output, "{} {} {} {} {} {} c", x1, y1, x2, y2, x3, y3)
+        writeln!(
+            self.output,
+            "{} {} {} {} {} {} c",
+            x1.into(),
+            y1.into(),
+            x2.into(),
+            y2.into(),
+            x3.into(),
+            y3.into()
+        )
     }
     /// Add a circle approximated by four cubic Bézier curves to the
     /// current path.  Based on
     /// http://spencermortensen.com/articles/bezier-circle/
-    pub fn circle(&mut self, x: f32, y: f32, r: f32) -> io::Result<()> {
+    pub fn circle<U: Into<Pt>>(&mut self, x: U, y: U, r: U) -> io::Result<()> {
+        let x = x.into().0;
+        let y = y.into().0;
+        let r = r.into().0;
         let top = y - r;
         let bottom = y + r;
         let left = x - r;
@@ -156,7 +176,7 @@ impl<'a> Canvas<'a> {
         writeln!(self.output, "S")
     }
     /// Close and stroke the current path.
-    pub fn close_and_stroke(&mut self) -> io::Result<()> {
+    pub fn stroke_and_close(&mut self) -> io::Result<()> {
         writeln!(self.output, "s")
     }
     /// Fill the current path.
@@ -188,12 +208,12 @@ impl<'a> Canvas<'a> {
         Ok(result)
     }
     /// Utility method for placing a string of text.
-    pub fn left_text(
+    pub fn left_text<U: Into<Pt>>(
         &mut self,
-        x: f32,
-        y: f32,
+        x: U,
+        y: U,
         font: &FontSource,
-        size: f32,
+        size: U,
         text: &str,
     ) -> io::Result<()> {
         let font = self.get_font(&font);
@@ -204,36 +224,38 @@ impl<'a> Canvas<'a> {
         })
     }
     /// Utility method for placing a string of text.
-    pub fn right_text(
+    pub fn right_text<U: Into<Pt>>(
         &mut self,
-        x: f32,
-        y: f32,
+        x: U,
+        y: U,
         font: &FontSource,
-        size: f32,
+        size: U,
         text: &str,
     ) -> io::Result<()> {
         let font = self.get_font(&font);
         self.text(|t| {
-            let text_width = font.text_width(size, text);
-            t.set_font(&font, size)?;
-            t.pos(x - text_width, y)?;
+            let s: Pt = size.into();
+            let text_width = font.text_width(s, text);
+            t.set_font(&font, s)?;
+            t.pos(x.into() - text_width, y.into())?;
             t.show(text)
         })
     }
     /// Utility method for placing a string of text.
-    pub fn center_text(
+    pub fn center_text<U: Into<Pt>>(
         &mut self,
-        x: f32,
-        y: f32,
+        x: U,
+        y: U,
         font: &FontSource,
-        size: f32,
+        size: U,
         text: &str,
     ) -> io::Result<()> {
         let font = self.get_font(&font);
         self.text(|t| {
-            let text_width = font.text_width(size, text);
-            t.set_font(&font, size)?;
-            t.pos(x - text_width / 2.0, y)?;
+            let s: Pt = size.into();
+            let text_width = font.text_width(s, text);
+            t.set_font(&font, s)?;
+            t.pos(x.into() - text_width / Pt(2.0), y.into())?;
             t.show(text)
         })
     }

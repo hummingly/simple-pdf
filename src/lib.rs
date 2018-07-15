@@ -20,7 +20,7 @@
 //! document.render_page(180.0, 240.0, |canvas| {
 //!     // This closure defines the content of the page
 //!     let hello = "Hello World!";
-//!     let w = font.text_width(24.0, hello) + 8.0;
+//!     let w = font.text_width(24.0, hello).0 + 8.0;
 //!
 //!     // Some simple graphics
 //!     canvas.set_stroke_color(Color::rgb(0, 0, 248))?;
@@ -80,6 +80,7 @@ mod textobject;
 pub use textobject::TextObject;
 
 pub mod units;
+use units::Pt;
 
 /// The top-level object for writing a PDF.
 ///
@@ -169,7 +170,7 @@ impl Pdf {
     pub fn render_page<F, U>(&mut self, width: U, height: U, render_contents: F) -> io::Result<()>
     where
         F: FnOnce(&mut Canvas) -> io::Result<()>,
-        U: Into<f32>,
+        U: Into<Pt>,
     {
         let (contents_object_id, content_length, fonts, outline_items) =
             self.write_new_object(move |contents_object_id, pdf| {
@@ -227,8 +228,8 @@ impl Pdf {
     fn write_page_dict(
         &mut self,
         content_oid: usize,
-        width: f32,
-        height: f32,
+        width: Pt,
+        height: Pt,
         font_oids: &NamedRefs,
     ) -> io::Result<usize> {
         self.write_new_object(|page_oid, pdf| {

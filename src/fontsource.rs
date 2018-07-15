@@ -1,8 +1,9 @@
-use encoding::{Encoding, FontEncoding, SYMBOL_ENCODING, ZAPFDINGBATS_ENCODING};
+use encoding::*;
 use fontmetrics::{get_builtin_metrics, FontMetrics};
 use std::io::{self, Write};
 use std::ops::Add;
 use Pdf;
+use units::Pt;
 
 /// The "Base14" built-in fonts in PDF.
 /// Underscores in these names are hyphens in the real names.
@@ -27,7 +28,8 @@ pub enum BuiltinFont {
 
 use BuiltinFont::*;
 impl BuiltinFont {
-    fn name(self) -> String {
+    /// Get the PDF name of this font.
+    pub fn name(self) -> String {
         match self {
             Courier => String::from("Courier"),
             Courier_Bold => String::from("Courier-Bold"),
@@ -44,6 +46,39 @@ impl BuiltinFont {
             Symbol => String::from("Symbol"),
             ZapfDingbats => String::from("ZapfDingbats"),
         }
+    }
+
+    /// Get the encoding that this font uses.
+    pub fn encoding(self) -> &'static Encoding {
+        match self {
+            Symbol => &SYMBOL_ENCODING,
+            ZapfDingbats => &ZAPFDINGBATS_ENCODING,
+            _ => if cfg!(target_os = "macos") {
+                &MAC_ROMAN_ENCODING
+            } else {
+                &WIN_ANSI_ENCODING
+            },
+        }
+    }
+
+    /// Get the width of a string in this font at given size.
+    pub fn text_width<U: Into<Pt>>(self, size: U, text: &str) -> Pt {
+        Pt(size.into().0 * self.raw_text_width(text) as f32 / 1000.0)
+    }
+
+    /// Get the width of a string in thousands of unit of text space.
+    /// This unit is what is used in some places internally in pdf files.
+    pub fn raw_text_width(self, text: &str) -> u32 {
+        self.encoding()
+            .encode_string(text)
+            .iter()
+            .map(|&ch| u32::from(self.metrics().get_width(ch).unwrap_or(100)))
+            .fold(0, Add::add)
+    }
+
+    /// Get the font metrics for font.
+    pub fn metrics(self) -> &'static FontMetrics {
+        get_builtin_metrics(self)
     }
 }
 
@@ -108,7 +143,7 @@ impl FontSource {
     /// # Examples
     /// ```
     /// use simple_pdf::{BuiltinFont, FontSource};
-    /// assert_eq!("Times-Roman", FontSource::from(BuiltinFont::Times_Roman).name());
+    /// assert_eq!("Times-Roman", BuiltinFont::Times_Roman.name());
     /// ```
     pub fn name(&self) -> String {
         self.name.clone()
@@ -124,13 +159,13 @@ impl FontSource {
     /// # Examples
     /// ```
     /// use simple_pdf::{BuiltinFont, FontSource};
-    /// let proportional = FontSource::from(BuiltinFont::Helvetica);
-    /// assert_eq!(62.004, proportional.text_width(12.0, "Hello World"));
-    /// let fixed = FontSource::from(BuiltinFont::Courier);
-    /// assert_eq!(60.0, fixed.text_width(10.0, "0123456789"));
+    /// let proportional = BuiltinFont::Helvetica;
+    /// assert_eq!(62.004, proportional.text_width(12.0, "Hello World").0);
+    /// let fixed = BuiltinFont::Courier;
+    /// assert_eq!(60.0, fixed.text_width(10.0, "0123456789").0);
     /// ```
-    pub fn text_width(&self, size: f32, text: &str) -> f32 {
-        size * self.raw_text_width(text) as f32 / 1000.0
+    pub fn text_width<U: Into<Pt>>(&self, size: U, text: &str) -> Pt {
+        Pt(size.into().0 * self.raw_text_width(text) as f32 / 1000.0)
     }
 
     /// Get the width of a string in thousands of unit of text space.
@@ -139,8 +174,8 @@ impl FontSource {
     /// # Examples
     /// ```
     /// use simple_pdf::{BuiltinFont, FontSource};
-    /// assert_eq!(5167, FontSource::from(BuiltinFont::Helvetica).raw_text_width("Hello World"));
-    /// assert_eq!(600, FontSource::from(BuiltinFont::Courier).raw_text_width("A"));
+    /// assert_eq!(5167, BuiltinFont::Helvetica.raw_text_width("Hello World"));
+    /// assert_eq!(600, BuiltinFont::Courier.raw_text_width("A"));
     /// ```
     pub fn raw_text_width(&self, text: &str) -> u32 {
         self.encoding
