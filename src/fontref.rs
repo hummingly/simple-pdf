@@ -27,11 +27,7 @@ pub struct FontRef {
 
 impl FontRef {
     // Should not be called by user code.
-    pub(crate) fn new(
-        n: usize,
-        encoding: Encoding,
-        metrics: Arc<FontMetrics>,
-    ) -> FontRef {
+    pub(crate) fn new(n: usize, encoding: Encoding, metrics: Arc<FontMetrics>) -> FontRef {
         FontRef {
             n,
             encoding,
@@ -53,14 +49,11 @@ impl FontRef {
     /// This unit is what is used in some places internally in pdf files
     /// and in some methods on a [TextObject](struct.TextObject.html).
     pub fn raw_text_width(&self, text: &str) -> u32 {
-        text.chars().fold(0, |acc, ch| {
-            acc + u32::from(
-                self.encoding
-                    .encode_char(ch)
-                    .and_then(|ch| self.metrics.get_width(ch))
-                    .unwrap_or(100),
-            )
-        })
+        let mut result = 0;
+        for char in self.encoding.encode_string(text) {
+            result += u32::from(self.metrics.get_width(char).unwrap_or(100));
+        }
+        result
     }
 }
 

@@ -9,8 +9,7 @@ use std::path::Path;
 #[allow(dead_code)]
 mod encoding;
 use encoding::{
-    Encoding, MAC_ROMAN_ENCODING, SYMBOL_ENCODING, WIN_ANSI_ENCODING,
-    ZAPFDINGBATS_ENCODING,
+    Encoding, MAC_ROMAN_ENCODING, SYMBOL_ENCODING, WIN_ANSI_ENCODING, ZAPFDINGBATS_ENCODING,
 };
 
 fn write_cond(f: &mut File, name: &str, encoding: &Encoding) -> Result<()> {
@@ -27,9 +26,7 @@ fn write_cond(f: &mut File, name: &str, encoding: &Encoding) -> Result<()> {
         let line = lineresult?;
         let words: Vec<&str> = line.split_whitespace().collect();
         if words[0] == "C" && words[3] == "WX" && words[6] == "N" {
-            if let (Some(c), Ok(w)) =
-                (encoding.get_code(words[7]), words[4].parse::<u16>())
-            {
+            if let (Some(c), Ok(w)) = (encoding.get_code(words[7]), words[4].parse::<u16>()) {
                 write!(f, "({}, {}), ", c, w)?;
             }
         }
@@ -39,9 +36,8 @@ fn write_cond(f: &mut File, name: &str, encoding: &Encoding) -> Result<()> {
 }
 
 fn main() {
-    let dst = Path::new(
-        &env::var("OUT_DIR").expect("Could not find directory.")
-    ).join("metrics_data.rs");
+    let dst =
+        Path::new(&env::var("OUT_DIR").expect("Could not find directory.")).join("metrics_data.rs");
     let f = &mut File::create(&dst).expect("Could not create file.");
     let textfonts = [
         "Courier",
@@ -82,17 +78,13 @@ fn main() {
 
     for font in textfonts.iter().take(12) {
         if cfg!(target_os = "macos") {
-            write_cond(f, font, &MAC_ROMAN_ENCODING)
-                .expect("Could not write to file.");
+            write_cond(f, font, &MAC_ROMAN_ENCODING).expect("Could not write to file.");
         } else {
-            write_cond(f, font, &WIN_ANSI_ENCODING)
-                .expect("Could not write to file.");
+            write_cond(f, font, &WIN_ANSI_ENCODING).expect("Could not write to file.");
         };
     }
 
-    write_cond(f, "Symbol", &SYMBOL_ENCODING)
-        .expect("Could not write to file.");
-    write_cond(f, "ZapfDingbats", &ZAPFDINGBATS_ENCODING)
-        .expect("Could not write to file.");
+    write_cond(f, "Symbol", &SYMBOL_ENCODING).expect("Could not write to file.");
+    write_cond(f, "ZapfDingbats", &ZAPFDINGBATS_ENCODING).expect("Could not write to file.");
     writeln!(f, "}}").expect("Could not write to file.");
 }

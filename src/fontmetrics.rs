@@ -21,9 +21,7 @@ impl FontMetrics {
             let line = line.expect("Could not read file.");
             let words: Vec<&str> = line.split_whitespace().collect();
             if words[0] == "C" && words[3] == "WX" {
-                if let (Ok(c), Ok(w)) =
-                    (words[1].parse::<u8>(), words[4].parse::<u16>())
-                {
+                if let (Ok(c), Ok(w)) = (words[1].parse::<u8>(), words[4].parse::<u16>()) {
                     result.widths.insert(c, w);
                 }
             }
