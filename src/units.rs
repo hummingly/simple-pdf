@@ -4,7 +4,7 @@
 //! to use other metrics.
 
 use std::fmt;
-use std::ops::{Add, Sub, Mul, Div};
+use std::ops::{Add, Div, Mul, Sub};
 
 const MM_TO_PT: f32 = 2.834_646;
 const PT_TO_MM: f32 = 0.352_778;
@@ -93,6 +93,12 @@ impl Mm {
 impl From<Pt> for Mm {
     fn from(value: Pt) -> Mm {
         Mm(value.0 * PT_TO_MM)
+    }
+}
+
+impl fmt::Display for Mm {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", Pt::from(*self))
     }
 }
 

@@ -1,8 +1,8 @@
 use encoding::*;
 use fontmetrics::{get_builtin_metrics, FontMetrics};
 use std::io::{self, Write};
-use Pdf;
 use units::Pt;
+use Pdf;
 
 /// The "Base14" built-in fonts in PDF.
 /// Underscores in these names are hyphens in the real names.
@@ -26,10 +26,25 @@ pub enum BuiltinFont {
 }
 
 use BuiltinFont::*;
-impl BuiltinFont {
-    /// Get the PDF name of this font.
-    pub fn name(self) -> String {
-        match self {
+impl FontSource for BuiltinFont {
+    fn write_object(&self, pdf: &mut Pdf) -> io::Result<usize> {
+        pdf.write_new_object(|font_object_id, pdf| {
+            writeln!(
+                pdf.output,
+                "<< /Type /Font /Subtype /Type1 /BaseFont /{} /Encoding /{} >>",
+                self.name(),
+                if cfg!(target_os = "macos") {
+                    "MacRomanEncoding"
+                } else {
+                    "WinAnsiEncoding"
+                }
+            )?;
+            Ok(font_object_id)
+        })
+    }
+
+    fn name(&self) -> String {
+        match *self {
             Courier => String::from("Courier"),
             Courier_Bold => String::from("Courier-Bold"),
             Courier_Oblique => String::from("Courier-Oblique"),
@@ -47,27 +62,23 @@ impl BuiltinFont {
         }
     }
 
-    /// Get the encoding that this font uses.
-    pub fn encoding(self) -> &'static Encoding {
-        match self {
-            Symbol => &SYMBOL_ENCODING,
-            ZapfDingbats => &ZAPFDINGBATS_ENCODING,
+    fn encoding(&self) -> Encoding {
+        match *self {
+            Symbol => SYMBOL_ENCODING.clone(),
+            ZapfDingbats => ZAPFDINGBATS_ENCODING.clone(),
             _ => if cfg!(target_os = "macos") {
-                &MAC_ROMAN_ENCODING
+                MAC_ROMAN_ENCODING.clone()
             } else {
-                &WIN_ANSI_ENCODING
+                WIN_ANSI_ENCODING.clone()
             },
         }
     }
 
-    /// Get the width of a string in this font at given size.
-    pub fn text_width<U: Into<Pt>>(self, size: U, text: &str) -> Pt {
+    fn text_width<U: Into<Pt>>(&self, size: U, text: &str) -> Pt {
         Pt(size.into().0 * self.raw_text_width(text) as f32 / 1000.0)
     }
 
-    /// Get the width of a string in thousands of unit of text space.
-    /// This unit is what is used in some places internally in pdf files.
-    pub fn raw_text_width(self, text: &str) -> u32 {
+    fn raw_text_width(&self, text: &str) -> u32 {
         self.encoding()
             .encode_string(text)
             .iter()
@@ -75,25 +86,8 @@ impl BuiltinFont {
             .sum()
     }
 
-    /// Get the font metrics for font.
-    pub fn metrics(self) -> &'static FontMetrics {
-        get_builtin_metrics(self)
-    }
-}
-
-impl From<BuiltinFont> for FontSource {
-    fn from(font: BuiltinFont) -> Self {
-        let metrics = get_builtin_metrics(font).clone();
-        let encoding = match font {
-            Symbol => FontEncoding::with_encoding(SYMBOL_ENCODING.clone()),
-            ZapfDingbats => FontEncoding::with_encoding(ZAPFDINGBATS_ENCODING.clone()),
-            _ => FontEncoding::new(),
-        };
-        FontSource {
-            name: font.name(),
-            encoding,
-            metrics,
-        }
+    fn metrics(&self) -> FontMetrics {
+        get_builtin_metrics(*self).clone()
     }
 }
 
@@ -101,30 +95,20 @@ impl From<BuiltinFont> for FontSource {
 /// At the moment, FontSource only supports Type1 fonts, e.g.
 /// the standard fonts (see BuiltinFont).
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
-pub struct FontSource {
+pub(crate) struct Font {
     name: String,
     encoding: FontEncoding,
-    metrics: FontMetrics,
 }
 
-impl FontSource {
-    /// This creates a new font resource to embed into the PDF document.
-    pub fn new(name: String, encoding: FontEncoding, metrics: FontMetrics) -> Self {
-        FontSource {
-            metrics,
-            name,
-            // must be a ref number
-            // descriptor: FontDescriptor,
-            encoding,
-            // to_unicode: UnicodeMap,
+impl Font {
+    pub fn from_src<F: FontSource>(source: &F) -> Self {
+        Self {
+            name: source.name(),
+            encoding: FontEncoding::with_encoding(source.encoding().clone()),
         }
     }
 
-    /// Write the object(s) for this font to a pdf file.
-    ///
-    /// This is called automatically for each font used in a document.
-    /// There should be no need to call this method from user code.
-    pub(crate) fn write_object(&self, pdf: &mut Pdf) -> io::Result<usize> {
+    pub fn write_object(&self, pdf: &mut Pdf) -> io::Result<usize> {
         pdf.write_new_object(|font_object_id, pdf| {
             writeln!(
                 pdf.output,
@@ -136,6 +120,19 @@ impl FontSource {
             Ok(font_object_id)
         })
     }
+}
+
+/// This trait is implemented by any kind of font that the pdf library
+/// supports.
+///
+/// Currently, only BuiltinFont implements this.
+/// TODO Add implementation(s) for other fonts.
+pub trait FontSource {
+    /// Write the object(s) for this font to a pdf file.
+    ///
+    /// This is called automatically for each font used in a document.
+    /// There should be no need to call this method from user code.
+    fn write_object(&self, pdf: &mut Pdf) -> io::Result<usize>;
 
     /// Get the PDF name of this font.
     ///
@@ -144,14 +141,10 @@ impl FontSource {
     /// use simple_pdf::{BuiltinFont, FontSource};
     /// assert_eq!("Times-Roman", BuiltinFont::Times_Roman.name());
     /// ```
-    pub fn name(&self) -> String {
-        self.name.clone()
-    }
+    fn name(&self) -> String;
 
     /// Get the encoding that this font uses.
-    pub fn encoding(&self) -> Encoding {
-        self.encoding.encoding()
-    }
+    fn encoding(&self) -> Encoding;
 
     /// Get the width of a string in this font at given size.
     ///
@@ -163,9 +156,7 @@ impl FontSource {
     /// let fixed = BuiltinFont::Courier;
     /// assert_eq!(60.0, fixed.text_width(10.0, "0123456789").0);
     /// ```
-    pub fn text_width<U: Into<Pt>>(&self, size: U, text: &str) -> Pt {
-        Pt(size.into().0 * self.raw_text_width(text) as f32 / 1000.0)
-    }
+    fn text_width<U: Into<Pt>>(&self, size: U, text: &str) -> Pt;
 
     /// Get the width of a string in thousands of unit of text space.
     /// This unit is what is used in some places internally in pdf files.
@@ -176,16 +167,8 @@ impl FontSource {
     /// assert_eq!(5167, BuiltinFont::Helvetica.raw_text_width("Hello World"));
     /// assert_eq!(600, BuiltinFont::Courier.raw_text_width("A"));
     /// ```
-    pub fn raw_text_width(&self, text: &str) -> u32 {
-        self.encoding
-            .encode_string(text)
-            .iter()
-            .map(|&ch| u32::from(self.metrics.get_width(ch).unwrap_or(100)))
-            .sum()
-    }
+    fn raw_text_width(&self, text: &str) -> u32;
 
     /// Get the font metrics for font.
-    pub fn metrics(&self) -> FontMetrics {
-        self.metrics.clone()
-    }
+    fn metrics(&self) -> FontMetrics;
 }

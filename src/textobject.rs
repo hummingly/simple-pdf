@@ -20,7 +20,7 @@ use units::Pt;
 ///
 /// # let mut document = Pdf::create("foo.pdf").unwrap();
 /// # document.render_page(180.0, 240.0, |canvas| {
-/// let serif = canvas.get_font(&BuiltinFont::Times_Roman.into());
+/// let serif = canvas.get_font(BuiltinFont::Times_Roman);
 /// // t will be a TextObject
 /// canvas.text(|t| {
 ///     t.set_font(&serif, 14.0)?;
@@ -40,22 +40,25 @@ pub struct TextObject<'a> {
     encoding: Encoding,
 }
 
-use self::BaseEncoding::*;
 impl<'a> TextObject<'a> {
     // Should not be called by user code.
     pub(crate) fn new(output: &mut Write) -> TextObject {
         TextObject {
             output,
             encoding: if cfg!(target_os = "macos") {
-                MacRomanEncoding.to_encoding().clone()
+                BaseEncoding::MacRomanEncoding.to_encoding().clone()
             } else {
-                WinAnsiEncoding.to_encoding().clone()
+                BaseEncoding::WinAnsiEncoding.to_encoding().clone()
             },
         }
     }
     /// Set the font and font-size to be used by the following text
     /// operations.
-    pub fn set_font<U: Into<Pt>>(&mut self, font: &FontRef, size: U) -> io::Result<()> {
+    pub fn set_font<U: Into<Pt>>(
+        &mut self,
+        font: &FontRef,
+        size: U,
+    ) -> io::Result<()> {
         self.encoding = font.encoding();
         writeln!(self.output, "{} {} Tf", font, size.into())
     }
@@ -72,41 +75,33 @@ impl<'a> TextObject<'a> {
     }
     /// Set the amount of extra space between characters, in 1/1000
     /// text unit.
-    pub fn set_char_spacing<U: Into<Pt>>(&mut self, c_space: U) -> io::Result<()> {
+    pub fn set_char_spacing<U: Into<Pt>>(
+        &mut self,
+        c_space: U,
+    ) -> io::Result<()> {
         writeln!(self.output, "{} Tc", c_space.into())
     }
     /// Set the amount of extra space between words, in 1/1000
     /// text unit.
-    pub fn set_word_spacing<U: Into<Pt>>(&mut self, w_space: U) -> io::Result<()> {
+    pub fn set_word_spacing<U: Into<Pt>>(
+        &mut self,
+        w_space: U,
+    ) -> io::Result<()> {
         writeln!(self.output, "{} Tw", w_space.into())
     }
 
     /// Set color for stroking operations.
     pub fn set_stroke_color(&mut self, color: Color) -> io::Result<()> {
-        let norm = |c| f32::from(c) / 255.0;
         match color {
-            Color::RGB { red, green, blue } => writeln!(
-                self.output,
-                "{} {} {} SC",
-                norm(red),
-                norm(green),
-                norm(blue)
-            ),
-            Color::Gray { gray } => writeln!(self.output, "{} G", norm(gray)),
+            Color::RGB { .. } => writeln!(self.output, "{} SC", color),
+            Color::Gray { .. } => writeln!(self.output, "{} G", color),
         }
     }
     /// Set color for non-stroking operations.
     pub fn set_fill_color(&mut self, color: Color) -> io::Result<()> {
-        let norm = |c| f32::from(c) / 255.0;
         match color {
-            Color::RGB { red, green, blue } => writeln!(
-                self.output,
-                "{} {} {} sc",
-                norm(red),
-                norm(green),
-                norm(blue)
-            ),
-            Color::Gray { gray } => writeln!(self.output, "{} g", norm(gray)),
+            Color::RGB { .. } => writeln!(self.output, "{} sc", color),
+            Color::Gray { .. } => writeln!(self.output, "{} g", color),
         }
     }
 
@@ -142,7 +137,7 @@ impl<'a> TextObject<'a> {
     ///
     /// # let mut document = Pdf::create("foo.pdf").unwrap();
     /// # document.render_page(180.0, 240.0, |canvas| {
-    /// # let serif = canvas.get_font(&BuiltinFont::Times_Roman.into());
+    /// # let serif = canvas.get_font(BuiltinFont::Times_Roman);
     /// # canvas.text(|t| {
     /// #    t.set_font(&serif, 14.0)?;
     /// t.show_adjusted(&[("W", 130), ("AN", -40), ("D", 0)])
