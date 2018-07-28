@@ -1,7 +1,6 @@
 use encoding::*;
 use fontmetrics::{get_builtin_metrics, FontMetrics};
 use std::io::{self, Write};
-use std::ops::Add;
 use Pdf;
 use units::Pt;
 
@@ -73,7 +72,7 @@ impl BuiltinFont {
             .encode_string(text)
             .iter()
             .map(|&ch| u32::from(self.metrics().get_width(ch).unwrap_or(100)))
-            .fold(0, Add::add)
+            .sum()
     }
 
     /// Get the font metrics for font.
@@ -182,7 +181,7 @@ impl FontSource {
             .encode_string(text)
             .iter()
             .map(|&ch| u32::from(self.metrics.get_width(ch).unwrap_or(100)))
-            .fold(0, Add::add)
+            .sum()
     }
 
     /// Get the font metrics for font.
