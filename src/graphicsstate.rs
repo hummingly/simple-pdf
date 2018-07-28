@@ -17,6 +17,20 @@ pub enum JoinStyle {
     Bevel,
 }
 
+impl Display for JoinStyle {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match *self {
+                JoinStyle::Miter => 0,
+                JoinStyle::Round => 1,
+                JoinStyle::Bevel => 2,
+            }
+        )
+    }
+}
+
 /// Line cap styles, as described in section 8.4.3.4 of the PDF
 /// specification.
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
@@ -28,6 +42,20 @@ pub enum CapStyle {
     /// Include a square around the endpoint, so the line continues for half
     /// a line-width through the endpoint.
     ProjectingSquare,
+}
+
+impl Display for CapStyle {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match *self {
+                CapStyle::Butt => 0,
+                CapStyle::Round => 1,
+                CapStyle::ProjectingSquare => 2,
+            }
+        )
+    }
 }
 
 /// Any color (or grayscale) value that this library can make PDF represent.
@@ -64,6 +92,22 @@ impl Color {
     /// ````
     pub fn gray(gray: u8) -> Self {
         Color::Gray { gray }
+    }
+}
+
+impl Display for Color {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let norm = |c: u8| f32::from(c) / 255.0;
+        write!(
+            f,
+            "{}",
+            match *self {
+                Color::RGB { red, green, blue } => {
+                    format!("{} {} {}", norm(red), norm(green), norm(blue),)
+                }
+                Color::Gray { gray } => format!("{}", norm(gray)),
+            }
+        )
     }
 }
 

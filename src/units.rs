@@ -4,7 +4,7 @@
 //! to use other metrics.
 
 use std::fmt;
-use std::ops::{Add, Sub, Mul, Div};
+use std::ops::{Add, Div, Mul, Sub};
 
 const MM_TO_PT: f32 = 2.834_646;
 const PT_TO_MM: f32 = 0.352_778;

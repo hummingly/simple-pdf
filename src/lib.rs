@@ -14,7 +14,7 @@
 //! let mut document = Pdf::create("example.pdf")
 //!     .expect("Create pdf file");
 //! // The 14 builtin fonts are available
-//! let font = FontSource::from(BuiltinFont::Times_Roman);
+//! let font = BuiltinFont::Times_Roman;
 //!
 //! // Add a page to the document.  This page will be 180 by 240 pt large.
 //! document.render_page(180.0, 240.0, |canvas| {
@@ -28,7 +28,7 @@
 //!     canvas.stroke()?;
 //!
 //!     // Some text
-//!     canvas.center_text(90.0, 200.0, &font, 24.0, hello)
+//!     canvas.center_text(90.0, 200.0, font, 24.0, hello)
 //! }).expect("Write page");
 //! // Write all pending content, including the trailer and index
 //! document.finish().expect("Finish pdf document");
@@ -57,6 +57,7 @@ use std::fs::File;
 use std::io::{self, Seek, SeekFrom, Write};
 
 mod fontsource;
+use fontsource::Font;
 pub use fontsource::{BuiltinFont, FontSource};
 
 mod fontref;
@@ -93,7 +94,7 @@ pub struct Pdf {
     output: File,
     object_offsets: Vec<i64>,
     page_objects_ids: Vec<usize>,
-    font_object_ids: HashMap<FontSource, usize>,
+    font_object_ids: HashMap<Font, usize>,
     outline_items: Vec<OutlineItem>,
     document_info: BTreeMap<String, String>,
 }
@@ -167,7 +168,12 @@ impl Pdf {
     /// The page will be `width` x `height` points large, and the
     /// actual content of the page will be created by the function
     /// `render_contents` by applying drawing methods on the Canvas.
-    pub fn render_page<F, U>(&mut self, width: U, height: U, render_contents: F) -> io::Result<()>
+    pub fn render_page<F, U>(
+        &mut self,
+        width: U,
+        height: U,
+        render_contents: F,
+    ) -> io::Result<()>
     where
         F: FnOnce(&mut Canvas) -> io::Result<()>,
         U: Into<Pt>,
@@ -212,8 +218,12 @@ impl Pdf {
                 self.font_object_ids.insert(src.to_owned(), object_id);
             }
         }
-        let page_oid =
-            self.write_page_dict(contents_object_id, width.into(), height.into(), &font_oids)?;
+        let page_oid = self.write_page_dict(
+            contents_object_id,
+            width.into(),
+            height.into(),
+            &font_oids,
+        )?;
         // Take the outline_items from this page, mark them with the page ref,
         // and save them for the document outline.
         for i in &outline_items {
@@ -255,12 +265,17 @@ impl Pdf {
         F: FnOnce(usize, &mut Pdf) -> io::Result<T>,
     {
         let id = self.object_offsets.len();
-        let (result, offset) = self.write_object(id, |pdf| write_content(id, pdf))?;
+        let (result, offset) =
+            self.write_object(id, |pdf| write_content(id, pdf))?;
         self.object_offsets.push(offset);
         Ok(result)
     }
 
-    fn write_object_with_id<F, T>(&mut self, id: usize, write_content: F) -> io::Result<T>
+    fn write_object_with_id<F, T>(
+        &mut self,
+        id: usize,
+        write_content: F,
+    ) -> io::Result<T>
     where
         F: FnOnce(&mut Pdf) -> io::Result<T>,
     {
@@ -270,7 +285,11 @@ impl Pdf {
         Ok(result)
     }
 
-    fn write_object<F, T>(&mut self, id: usize, write_content: F) -> io::Result<(T, i64)>
+    fn write_object<F, T>(
+        &mut self,
+        id: usize,
+        write_content: F,
+    ) -> io::Result<(T, i64)>
     where
         F: FnOnce(&mut Pdf) -> io::Result<T>,
     {
@@ -307,7 +326,8 @@ impl Pdf {
                 for (key, value) in info {
                     writeln!(pdf.output, " /{} ({})", key, value)?;
                 }
-                if let Ok(now) = time::strftime("%Y%m%d%H%M%S%z", &time::now()) {
+                if let Ok(now) = time::strftime("%Y%m%d%H%M%S%z", &time::now())
+                {
                     write!(
                         pdf.output,
                         " /CreationDate (D:{now})\n \
