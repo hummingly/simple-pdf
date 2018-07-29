@@ -174,9 +174,9 @@ impl<'a> Canvas<'a> {
 
     /// Create a text object.
     ///
-    /// The contents of the text object is defined by the function text, by
-    /// applying methods to the TextObject it gets as an argument. On success,
-    /// returns the value returned by text.
+    /// The contents of the text object is defined by the function `render_text`,
+    /// by applying methods to the TextObject it gets as an argument. On
+    /// success, returns the value returned by `render_text`.
     pub fn text<F, T>(&mut self, render_text: F) -> Result<T>
     where
         F: FnOnce(&mut TextObject) -> Result<T>
