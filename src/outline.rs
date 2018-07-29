@@ -1,26 +1,26 @@
 pub use encoding::WIN_ANSI_ENCODING;
-use std::io::{self, Write};
+use std::io::{Result, Write};
 
 /// An item in the document outline.
 ///
-/// An OutlineItem associates a name (contained in an ordered tree)
-/// with a location in the document.  The PDF standard supports
-/// several ways to specify an exact location on a page, but this
-/// implementation currently only supports linking to a specific page.
+/// An OutlineItem associates a name (contained in an ordered tree) with a
+/// location in the document.  The PDF standard supports several ways to
+/// specify an exact location on a page, but this implementation currently only
+/// supports linking to a specific page.
 ///
-/// To actually create an OutlineItem in a meaningful way, please
-/// use `Canvas::add_outline`.
+/// To actually create an OutlineItem in a meaningful way, please use
+/// `Canvas::add_outline`.
 #[derive(Clone)]
 pub struct OutlineItem {
     title: String,
-    page_id: Option<usize>,
+    page_id: Option<usize>
 }
 
 impl OutlineItem {
     pub fn new(title: &str) -> OutlineItem {
         OutlineItem {
             title: title.to_string(),
-            page_id: None,
+            page_id: None
         }
     }
 
@@ -33,8 +33,8 @@ impl OutlineItem {
         output: &mut Write,
         parent_id: usize,
         prev: Option<usize>,
-        next: Option<usize>,
-    ) -> io::Result<()> {
+        next: Option<usize>
+    ) -> Result<()> {
         output.write_all(b"<< /Title (")?;
         output.write_all(&WIN_ANSI_ENCODING.encode_string(&self.title))?;
         output.write_all(b")\n")?;

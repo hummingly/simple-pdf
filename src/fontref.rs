@@ -8,21 +8,20 @@ use units::Pt;
 ///
 /// The way to get FontRef is to call
 /// [Canvas::get_font](struct.Canvas.html#method.get_font) with a
-/// [FontSource](trait.FontSource.html).
-/// In PDF terms, a FontSource is everything needed to build a font
-/// dictionary, while a FontRef is the name that can be used in a page
-/// stream to use a font.
-/// Calling Canvas::get_font will make sure the font dictionary is
-/// created in the file, associate it with a name in the page
-/// resources and return a FontRef representing that name.
+/// [FontSource](trait.FontSource.html). In PDF terms, a FontSource is
+/// everything needed to build a font dictionary, while a FontRef is the name
+/// that can be used in a page stream to use a font. Calling Canvas::get_font
+/// will make sure the font dictionary is created in the file, associate it
+/// with a name in the page resources and return a FontRef representing that
+/// name.
 ///
-/// The `serif` variable in
-/// [the TextObject example](struct.TextObject.html#example) is a FontRef.
+/// The `serif` variable in [the TextObject
+/// example](struct.TextObject.html#example) is a FontRef.
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct FontRef {
     n: usize,
     encoding: Encoding,
-    metrics: Arc<FontMetrics>,
+    metrics: Arc<FontMetrics>
 }
 
 impl FontRef {
@@ -30,12 +29,12 @@ impl FontRef {
     pub(crate) fn new(
         n: usize,
         encoding: Encoding,
-        metrics: Arc<FontMetrics>,
+        metrics: Arc<FontMetrics>
     ) -> FontRef {
         FontRef {
             n,
             encoding,
-            metrics,
+            metrics
         }
     }
     /// Get the encoding used by the referenced font.
@@ -58,7 +57,7 @@ impl FontRef {
                 self.encoding
                     .encode_char(ch)
                     .and_then(|ch| self.metrics.get_width(ch))
-                    .unwrap_or(100),
+                    .unwrap_or(100)
             )
         })
     }

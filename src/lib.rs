@@ -1,35 +1,35 @@
-//! A library for creating pdf files.
+//! A library for creating pdf files based on [pdf-canvas](https://github.com/kaj/rust-pdf).
 //!
-//! Currently, simple vector graphics and text set in the 14 built-in
-//! fonts are supported.
-//! The main entry point of the crate is the [struct Pdf](struct.Pdf.html),
-//! representing a PDF file being written.
+//! Currently, simple vector graphics and text set in the 14 built-in fonts are
+//! supported. The main entry point of the crate is the [struct
+//! Pdf](struct.Pdf.html), representing a PDF file being written.
 
 //! # Example
 //!
 //! ```
-//! use simple_pdf::{Pdf, BuiltinFont, FontSource};
 //! use simple_pdf::graphicsstate::Color;
+//! use simple_pdf::{BuiltinFont, FontSource, Pdf};
 //!
-//! let mut document = Pdf::create("example.pdf")
-//!     .expect("Create pdf file");
+//! let mut document = Pdf::create("example.pdf").expect("Create pdf file");
 //! // The 14 builtin fonts are available
 //! let font = BuiltinFont::Times_Roman;
 //!
 //! // Add a page to the document.  This page will be 180 by 240 pt large.
-//! document.render_page(180.0, 240.0, |canvas| {
-//!     // This closure defines the content of the page
-//!     let hello = "Hello World!";
-//!     let w = font.text_width(24.0, hello).0 + 8.0;
+//! document
+//!     .render_page(180.0, 240.0, |canvas| {
+//!         // This closure defines the content of the page
+//!         let hello = "Hello World!";
+//!         let w = font.text_width(24.0, hello).0 + 8.0;
 //!
-//!     // Some simple graphics
-//!     canvas.set_stroke_color(Color::rgb(0, 0, 248))?;
-//!     canvas.rectangle(90.0 - w / 2.0, 194.0, w, 26.0)?;
-//!     canvas.stroke()?;
+//!         // Some simple graphics
+//!         canvas.set_stroke_color(Color::rgb(0, 0, 248))?;
+//!         canvas.rectangle(90.0 - w / 2.0, 194.0, w, 26.0)?;
+//!         canvas.stroke()?;
 //!
-//!     // Some text
-//!     canvas.center_text(90.0, 200.0, &font, 24.0, hello)
-//! }).expect("Write page");
+//!         // Some text
+//!         canvas.center_text(90.0, 200.0, &font, 24.0, hello)
+//!     })
+//!     .expect("Write page");
 //! // Write all pending content, including the trailer and index
 //! document.finish().expect("Finish pdf document");
 //! ```
@@ -39,11 +39,8 @@
 //!
 //! ```toml
 //! [dependencies]
-//! pdf-canvas = "*"
+//! simple-pdf = "0.1"
 //! ```
-//!
-//! Some more working usage examples exists in [the examples directory]
-//! (https://github.com/kaj/rust-pdf/tree/master/examples).
 #![deny(missing_docs)]
 
 #[macro_use]
@@ -54,7 +51,7 @@ extern crate time;
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 use std::fs::File;
-use std::io::{self, Seek, SeekFrom, Write};
+use std::io::{Result, Seek, SeekFrom, Write};
 
 mod fontsource;
 use fontsource::Font;
@@ -85,18 +82,18 @@ use units::Pt;
 
 /// The top-level object for writing a PDF.
 ///
-/// A PDF file is created with the `create` or `new` methods.
-/// Some metadata can be stored with `set_foo` methods, and pages
-/// are appended with the `render_page` method.
-/// Don't forget to call `finish` when done, to write the document
-/// trailer, without it the written file won't be a proper PDF.
+/// A PDF file is created with the `create` or `new` methods. Some metadata can
+/// be stored with `set_foo` methods, and pages are appended with the
+/// `render_page` method.
+/// Don't forget to call `finish` when done, to write the document trailer,
+/// without it the written file won't be a proper PDF.
 pub struct Pdf {
     output: File,
     object_offsets: Vec<i64>,
     page_objects_ids: Vec<usize>,
     font_object_ids: HashMap<Font, usize>,
     outline_items: Vec<OutlineItem>,
-    document_info: BTreeMap<String, String>,
+    document_info: BTreeMap<String, String>
 }
 
 const ROOT_OBJECT_ID: usize = 1;
@@ -104,13 +101,13 @@ const PAGES_OBJECT_ID: usize = 2;
 
 impl Pdf {
     /// Create a new PDF document as a new file with given filename.
-    pub fn create(filename: &str) -> io::Result<Pdf> {
+    pub fn create(filename: &str) -> Result<Pdf> {
         let file = File::create(filename)?;
         Pdf::new(file)
     }
 
     /// Create a new PDF document, writing to `output`.
-    pub fn new(mut output: File) -> io::Result<Pdf> {
+    pub fn new(mut output: File) -> Result<Pdf> {
         // TODO Maybe use a lower version?  Possibly decide by features used?
         output.write_all(b"%PDF-1.7\n%\xB5\xED\xAE\xFB\n")?;
         Ok(Pdf {
@@ -121,7 +118,7 @@ impl Pdf {
             page_objects_ids: vec![],
             font_object_ids: HashMap::new(),
             outline_items: Vec::new(),
-            document_info: BTreeMap::new(),
+            document_info: BTreeMap::new()
         })
     }
     /// Set metadata: the document's title.
@@ -144,42 +141,42 @@ impl Pdf {
         self.document_info
             .insert("Subject".to_string(), keywords.to_string());
     }
-    /// Set metadata: If the document was converted to PDF from another
-    /// format, the name of the conforming product that created the original
-    /// document from which it was converted.
+    /// Set metadata: If the document was converted to PDF from another format,
+    /// the name of the conforming product that created the original document
+    /// from which it was converted.
     pub fn set_creator(&mut self, creator: &str) {
         self.document_info
             .insert("Creator".to_string(), creator.to_string());
     }
-    /// Set metadata: If the document was converted to PDF from another
-    /// format, the name of the conforming product that converted it to PDF.
+    /// Set metadata: If the document was converted to PDF from another format,
+    /// the name of the conforming product that converted it to PDF.
     pub fn set_producer(&mut self, producer: &str) {
         self.document_info
             .insert("Producer".to_string(), producer.to_string());
     }
 
     /// Return the current read/write position in the output file.
-    fn tell(&mut self) -> io::Result<u64> {
+    fn tell(&mut self) -> Result<u64> {
         self.output.seek(SeekFrom::Current(0))
     }
 
     /// Create a new page in the PDF document.
     ///
-    /// The page will be `width` x `height` points large, and the
-    /// actual content of the page will be created by the function
-    /// `render_contents` by applying drawing methods on the Canvas.
+    /// The page will be `width` x `height` points large, and the actual
+    /// content of the page will be created by the function `render_page` by
+    /// applying drawing methods on the Canvas.
     pub fn render_page<F, U>(
         &mut self,
         width: U,
         height: U,
-        render_contents: F,
-    ) -> io::Result<()>
+        render_contents: F
+    ) -> Result<()>
     where
-        F: FnOnce(&mut Canvas) -> io::Result<()>,
-        U: Into<Pt>,
+        F: FnOnce(&mut Canvas) -> Result<()>,
+        U: Into<Pt>
     {
-        let (contents_object_id, content_length, fonts, outline_items) =
-            self.write_new_object(move |contents_object_id, pdf| {
+        let (contents_object_id, content_length, fonts, outline_items) = self
+            .write_new_object(move |contents_object_id, pdf| {
                 // Guess the ID of the next object. (We’ll assert it below.)
                 writeln!(
                     pdf.output,
@@ -195,7 +192,7 @@ impl Pdf {
                 render_contents(&mut Canvas::new(
                     &mut pdf.output,
                     &mut fonts,
-                    &mut outline_items,
+                    &mut outline_items
                 ))?;
                 let end = pdf.tell()?;
 
@@ -222,7 +219,7 @@ impl Pdf {
             contents_object_id,
             width.into(),
             height.into(),
-            &font_oids,
+            &font_oids
         )?;
         // Take the outline_items from this page, mark them with the page ref,
         // and save them for the document outline.
@@ -240,8 +237,8 @@ impl Pdf {
         content_oid: usize,
         width: Pt,
         height: Pt,
-        font_oids: &NamedRefs,
-    ) -> io::Result<usize> {
+        font_oids: &NamedRefs
+    ) -> Result<usize> {
         self.write_new_object(|page_oid, pdf| {
             writeln!(
                 pdf.output,
@@ -260,9 +257,9 @@ impl Pdf {
         })
     }
 
-    fn write_new_object<F, T>(&mut self, write_content: F) -> io::Result<T>
+    fn write_new_object<F, T>(&mut self, write_content: F) -> Result<T>
     where
-        F: FnOnce(usize, &mut Pdf) -> io::Result<T>,
+        F: FnOnce(usize, &mut Pdf) -> Result<T>
     {
         let id = self.object_offsets.len();
         let (result, offset) =
@@ -274,10 +271,10 @@ impl Pdf {
     fn write_object_with_id<F, T>(
         &mut self,
         id: usize,
-        write_content: F,
-    ) -> io::Result<T>
+        write_content: F
+    ) -> Result<T>
     where
-        F: FnOnce(&mut Pdf) -> io::Result<T>,
+        F: FnOnce(&mut Pdf) -> Result<T>
     {
         assert!(self.object_offsets[id] == -1);
         let (result, offset) = self.write_object(id, write_content)?;
@@ -288,12 +285,12 @@ impl Pdf {
     fn write_object<F, T>(
         &mut self,
         id: usize,
-        write_content: F,
-    ) -> io::Result<(T, i64)>
+        write_content: F
+    ) -> Result<(T, i64)>
     where
-        F: FnOnce(&mut Pdf) -> io::Result<T>,
+        F: FnOnce(&mut Pdf) -> Result<T>
     {
-        // `as i64` here would overflow for PDF files bigger than 2**63 bytes
+        // `as i64` here would overflow for PDF files bigger than 2^63 bytes
         let offset = self.tell()? as i64;
         writeln!(self.output, "{} 0 obj", id)?;
         let result = write_content(self)?;
@@ -301,10 +298,10 @@ impl Pdf {
         Ok((result, offset))
     }
 
-    /// Write out the document trailer.
-    /// The trailer consists of the pages object, the root object,
-    /// the xref list, the trailer object and the startxref position.
-    pub fn finish(mut self) -> io::Result<()> {
+    /// Write out the document trailer. The trailer consists of the pages
+    /// object, the root object, the xref list, the trailer object and the
+    /// startxref position.
+    pub fn finish(mut self) -> Result<()> {
         self.write_object_with_id(PAGES_OBJECT_ID, |pdf| {
             writeln!(
                 pdf.output,
@@ -313,7 +310,8 @@ impl Pdf {
                  /Kids [ {pages}]\n\
                  >>",
                 c = pdf.page_objects_ids.len(),
-                pages = pdf.page_objects_ids
+                pages = pdf
+                    .page_objects_ids
                     .iter()
                     .map(|id| format!("{} 0 R ", id))
                     .collect::<String>()
@@ -393,7 +391,7 @@ impl Pdf {
         Ok(())
     }
 
-    fn write_outlines(&mut self) -> io::Result<Option<usize>> {
+    fn write_outlines(&mut self) -> Result<Option<usize>> {
         if self.outline_items.is_empty() {
             return Ok(None);
         }
@@ -411,7 +409,7 @@ impl Pdf {
                     &mut pdf.output,
                     parent_id,
                     if is_first { None } else { Some(object_id - 1) },
-                    if is_last { None } else { Some(object_id + 1) },
+                    if is_last { None } else { Some(object_id + 1) }
                 ).and(Ok(object_id))
             })?;
             if is_first {
@@ -439,13 +437,13 @@ impl Pdf {
 }
 
 struct NamedRefs {
-    oids: HashMap<FontRef, usize>,
+    oids: HashMap<FontRef, usize>
 }
 
 impl NamedRefs {
     fn new() -> Self {
         NamedRefs {
-            oids: HashMap::new(),
+            oids: HashMap::new()
         }
     }
 

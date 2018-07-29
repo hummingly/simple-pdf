@@ -1,16 +1,15 @@
 use encoding::{BaseEncoding, Encoding};
 use fontref::FontRef;
 use graphicsstate::Color;
-use std::io::{self, Write};
+use std::io::{Result, Write};
 use units::Pt;
 
 /// A text object is where text is put on the canvas.
 ///
-/// A TextObject should never be created directly by the user.
-/// Instead, the [Canvas.text](struct.Canvas.html#method.text) method
-/// should be called.
-/// It will create a TextObject and call a callback, before terminating
-/// the text object properly.
+/// A TextObject should never be created directly by the user. Instead, the
+/// [Canvas.text](struct.Canvas.html#method.text) method should be called.
+/// It will create a TextObject and call a callback, before terminating the
+/// text object properly.
 ///
 /// # Example
 ///
@@ -37,7 +36,7 @@ use units::Pt;
 /// ```
 pub struct TextObject<'a> {
     output: &'a mut Write,
-    encoding: Encoding,
+    encoding: Encoding
 }
 
 impl<'a> TextObject<'a> {
@@ -49,73 +48,62 @@ impl<'a> TextObject<'a> {
                 BaseEncoding::MacRomanEncoding.to_encoding().clone()
             } else {
                 BaseEncoding::WinAnsiEncoding.to_encoding().clone()
-            },
+            }
         }
     }
-    /// Set the font and font-size to be used by the following text
-    /// operations.
+    /// Set the font and font-size to be used by the following text operations.
     pub fn set_font<U: Into<Pt>>(
         &mut self,
         font: &FontRef,
-        size: U,
-    ) -> io::Result<()> {
+        size: U
+    ) -> Result<()> {
         self.encoding = font.encoding();
         writeln!(self.output, "{} {} Tf", font, size.into())
     }
     /// Set leading, the vertical distance from a line of text to the next.
     /// This is important for the [show_line](#method.show_line) method.
-    pub fn set_leading<U: Into<Pt>>(&mut self, leading: U) -> io::Result<()> {
+    pub fn set_leading<U: Into<Pt>>(&mut self, leading: U) -> Result<()> {
         writeln!(self.output, "{} TL", leading.into())
     }
-    /// Set the rise above the baseline for coming text.  Calling
-    /// set_rise again with a zero argument will get back to the old
-    /// baseline.
-    pub fn set_rise<U: Into<Pt>>(&mut self, rise: U) -> io::Result<()> {
+    /// Set the rise above the baseline for coming text. Calling set_rise again
+    /// with a zero argument will get back to the old baseline.
+    pub fn set_rise<U: Into<Pt>>(&mut self, rise: U) -> Result<()> {
         writeln!(self.output, "{} Ts", rise.into())
     }
-    /// Set the amount of extra space between characters, in 1/1000
-    /// text unit.
-    pub fn set_char_spacing<U: Into<Pt>>(
-        &mut self,
-        c_space: U,
-    ) -> io::Result<()> {
+    /// Set the amount of extra space between characters, in 1/1000 text unit.
+    pub fn set_char_spacing<U: Into<Pt>>(&mut self, c_space: U) -> Result<()> {
         writeln!(self.output, "{} Tc", c_space.into())
     }
-    /// Set the amount of extra space between words, in 1/1000
-    /// text unit.
-    pub fn set_word_spacing<U: Into<Pt>>(
-        &mut self,
-        w_space: U,
-    ) -> io::Result<()> {
+    /// Set the amount of extra space between words, in 1/1000 text unit.
+    pub fn set_word_spacing<U: Into<Pt>>(&mut self, w_space: U) -> Result<()> {
         writeln!(self.output, "{} Tw", w_space.into())
     }
 
     /// Set color for stroking operations.
-    pub fn set_stroke_color(&mut self, color: Color) -> io::Result<()> {
+    pub fn set_stroke_color(&mut self, color: Color) -> Result<()> {
         match color {
             Color::RGB { .. } => writeln!(self.output, "{} SC", color),
-            Color::Gray { .. } => writeln!(self.output, "{} G", color),
+            Color::Gray { .. } => writeln!(self.output, "{} G", color)
         }
     }
     /// Set color for non-stroking operations.
-    pub fn set_fill_color(&mut self, color: Color) -> io::Result<()> {
+    pub fn set_fill_color(&mut self, color: Color) -> Result<()> {
         match color {
             Color::RGB { .. } => writeln!(self.output, "{} sc", color),
-            Color::Gray { .. } => writeln!(self.output, "{} g", color),
+            Color::Gray { .. } => writeln!(self.output, "{} g", color)
         }
     }
 
     /// Move text position.
     ///
-    /// The first time `pos` is called in a
-    /// TextObject, (x, y) refers to the same point as for
-    /// [Canvas::move_to](struct.Canvas.html#method.move_to), after that,
-    /// the point is relative to the earlier pos.
-    pub fn pos<U: Into<Pt>>(&mut self, x: U, y: U) -> io::Result<()> {
+    /// The first time `pos` is called in a TextObject, (x, y) refers to the
+    /// same point as for [Canvas::move_to](struct.Canvas.html#method.move_to),
+    /// after that, the point is relative to the earlier pos.
+    pub fn pos<U: Into<Pt>>(&mut self, x: U, y: U) -> Result<()> {
         writeln!(self.output, "{} {} Td", x.into(), y.into())
     }
     /// Show a text.
-    pub fn show(&mut self, text: &str) -> io::Result<()> {
+    pub fn show(&mut self, text: &str) -> Result<()> {
         self.output.write_all(b"(")?;
         self.output.write_all(&self.encoding.encode_string(text))?;
         self.output.write_all(b") Tj\n")?;
@@ -124,10 +112,10 @@ impl<'a> TextObject<'a> {
 
     /// Show one or more text strings, allowing individual glyph positioning.
     ///
-    /// Each item in param should contain a string to show and a number
-    /// to adjust the position.
-    /// The adjustment is measured in thousands of unit of text space.
-    /// Positive adjustment brings letters closer, negative widens the gap.
+    /// Each item in param should contain a string to show and a number to
+    /// adjust the position. The adjustment is measured in thousands of unit of
+    /// text space. Positive adjustment brings letters closer, negative widens
+    /// the gap.
     ///
     /// # Example
     ///
@@ -145,7 +133,7 @@ impl<'a> TextObject<'a> {
     /// # }).unwrap();
     /// # document.finish().unwrap();
     /// ```
-    pub fn show_adjusted(&mut self, param: &[(&str, i32)]) -> io::Result<()> {
+    pub fn show_adjusted(&mut self, param: &[(&str, i32)]) -> Result<()> {
         self.output.write_all(b"[")?;
         for &(text, offset) in param {
             self.output.write_all(b"(")?;
@@ -155,20 +143,20 @@ impl<'a> TextObject<'a> {
         writeln!(self.output, "] TJ")
     }
     /// Show a text as a line.  See also [set_leading](#method.set_leading).
-    pub fn show_line(&mut self, text: &str) -> io::Result<()> {
+    pub fn show_line(&mut self, text: &str) -> Result<()> {
         self.output.write_all(b"(")?;
         self.output.write_all(&self.encoding.encode_string(text))?;
         self.output.write_all(b") '\n")?;
         Ok(())
     }
     /// Push the graphics state on a stack.
-    pub fn gsave(&mut self) -> io::Result<()> {
+    pub fn gsave(&mut self) -> Result<()> {
         // TODO Push current encoding in self?
         writeln!(self.output, "q")
     }
-    /// Pop a graphics state from the [gsave](#method.gsave) stack and
-    /// restore it.
-    pub fn grestore(&mut self) -> io::Result<()> {
+    /// Pop a graphics state from the [gsave](#method.gsave) stack and restore
+    /// it.
+    pub fn grestore(&mut self) -> Result<()> {
         // TODO Pop current encoding in self?
         writeln!(self.output, "Q")
     }

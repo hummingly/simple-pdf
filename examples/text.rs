@@ -24,14 +24,20 @@ fn main() {
             let helvetica = BuiltinFont::Helvetica;
             c.left_text(10.0, h.0 - 20.0, &helvetica, 12.0, "Top left")?;
             c.left_text(10.0, 10.0, &helvetica, 12.0, "Bottom left")?;
-            c.right_text(w.0 - 10.0, h.0 - 20.0, &helvetica, 12.0, "Top right")?;
+            c.right_text(
+                w.0 - 10.0,
+                h.0 - 20.0,
+                &helvetica,
+                12.0,
+                "Top right"
+            )?;
             c.right_text(w.0 - 10.0, 10.0, &helvetica, 12.0, "Bottom right")?;
             c.center_text(
                 w.0 / 2.0,
                 h.0 - 30.0,
                 &BuiltinFont::Times_Bold,
                 24.0,
-                "Centered",
+                "Centered"
             )?;
             let times = c.get_font(&BuiltinFont::Times_Roman);
             c.text(|t| {
@@ -43,10 +49,11 @@ fn main() {
                 t.show_line("sit amet. Blahonga. ")?;
                 t.show_adjusted(&[("W", 130), ("AN", -40), ("D", 0)])?;
                 t.pos(0., -30.)?;
-                t.show_adjusted(&(-19..21)
-                    .map(|i| ("o", 16 * i))
-                    .collect::<Vec<_>>())
+                t.show_adjusted(
+                    &(-19..21).map(|i| ("o", 16 * i)).collect::<Vec<_>>()
+                )
             })?;
+            
 
             //In Swedish, we use the letters å, ä, and ö
             //in words like sloe liqueur.  That is why rust-pdf
@@ -57,14 +64,14 @@ fn main() {
                 500.0,
                 &times_italic,
                 14.0,
-                "På svenska använder vi bokstäverna å, ä & ö",
+                "På svenska använder vi bokstäverna å, ä & ö"
             )?;
             c.right_text(
                 w.0 - 10.0,
                 480.0,
                 &times_italic,
                 14.0,
-                "i ord som slånbärslikör. Därför använder",
+                "i ord som slånbärslikör. Därför använder"
             )?;
 
             c.right_text(
@@ -72,7 +79,7 @@ fn main() {
                 460.0,
                 &times_italic,
                 14.0,
-                "rust-pdf /WinAnsiEncoding för text.",
+                "rust-pdf /WinAnsiEncoding för text."
             )?;
 
             c.center_text(
@@ -80,14 +87,14 @@ fn main() {
                 400.0,
                 &BuiltinFont::Symbol,
                 14.0,
-                "Hellas ΑΒΓΔαβγδ",
+                "Hellas ΑΒΓΔαβγδ"
             )?;
             c.center_text(
                 w.0 / 2.0,
                 380.0,
                 &BuiltinFont::Symbol,
                 14.0,
-                "∀ μ < δ : ∃ σ ∈ Σ",
+                "∀ μ < δ : ∃ σ ∈ Σ"
             )?;
 
             c.center_text(
@@ -95,7 +102,7 @@ fn main() {
                 320.0,
                 &BuiltinFont::ZapfDingbats,
                 18.0,
-                "☎  ✌  ✖  ✤  ✰ ✴  ❐  ❝  ❤  ❞",
+                "☎  ✌  ✖  ✤  ✰ ✴  ❐  ❝  ❤  ❞"
             )?;
             Ok(())
         })

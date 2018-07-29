@@ -10,7 +10,7 @@ use std::path::Path;
 mod encoding;
 use encoding::{
     Encoding, MAC_ROMAN_ENCODING, SYMBOL_ENCODING, WIN_ANSI_ENCODING,
-    ZAPFDINGBATS_ENCODING,
+    ZAPFDINGBATS_ENCODING
 };
 
 fn write_cond(f: &mut File, name: &str, encoding: &Encoding) -> Result<()> {
@@ -57,7 +57,7 @@ fn main() {
         "Times_Italic",
         "Times_BoldItalic",
         "Symbol",
-        "ZapfDingbats",
+        "ZapfDingbats"
     ];
     writeln!(
         f,

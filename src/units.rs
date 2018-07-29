@@ -1,7 +1,6 @@
 //! Types for units in PDF files in points, millimeters and pixels (wrappers
-//! around floating points).
-//! By default points are used but also offers the possibilty
-//! to use other metrics.
+//! around floating points). By default points are used but also offers the
+//! possibilty to use other metrics.
 
 use std::fmt;
 use std::ops::{Add, Div, Mul, Sub};
@@ -10,8 +9,8 @@ const MM_TO_PT: f32 = 2.834_646;
 const PT_TO_MM: f32 = 0.352_778;
 const PX_TO_PT: f32 = 72.0;
 
-/// Represents points in a Pdf. Points can be converted from
-/// and into millimeters and to pixels.
+/// Represents points in a Pdf. Points can be converted from and into
+/// millimeters and to pixels.
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Pt(pub f32);
 
@@ -78,8 +77,8 @@ impl Div for Pt {
     }
 }
 
-/// Represents millimeters in a Pdf. Millimeters can be converted from
-/// and into points and to pixels.
+/// Represents millimeters in a Pdf. Millimeters can be converted from and into
+/// points and to pixels.
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Mm(pub f32);
 
@@ -128,8 +127,8 @@ impl Div for Mm {
     }
 }
 
-/// Pixels are measured in a different way. For pixels dpi
-/// (dots per inches) have to be defined.
+/// Pixels are measured in a different way. For pixels dpi (dots per inches)
+/// have to be defined.
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Px(pub usize);
 

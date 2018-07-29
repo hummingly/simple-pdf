@@ -1,27 +1,22 @@
 use std::collections::BTreeMap;
 
-/// To represent the text correct and to conform to the PDF standard
-/// create a FontEncoding instance. The base encoding is plattform
-/// specific (WinAnsiEncoding or MacRomanEncoding).
-/// For changing the encoding to the font's built-in encoding refer to
-/// to the Encoding reference.
-/// An encoding maintains the connection between unicode code points,
-/// bytes in PDF strings, and glyph names.
+/// To represent the text of a font correctly and conforming to the PDF
+/// standard create a FontEncoding instance which contains the base and font
+/// encoding. The base encoding is plattform specific (WinAnsiEncoding or
+/// MacRomanEncoding currently only) and the encoding is specified by the font.
 ///
 /// Currently, only WinAnsiEncoding and MacRomanEncoding is supported.
 ///
 /// # Example
 /// ````
 /// use simple_pdf::{BuiltinFont, FontSource};
-/// assert_eq!("WinAnsiEncoding",
-///            BuiltinFont::Helvetica.encoding().name());
-/// assert_eq!("SymbolEncoding",
-///            BuiltinFont::Symbol.encoding().name());
+/// assert_eq!("WinAnsiEncoding", BuiltinFont::Helvetica.encoding().name());
+/// assert_eq!("SymbolEncoding", BuiltinFont::Symbol.encoding().name());
 /// ````
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct FontEncoding {
     base: BaseEncoding,
-    encoding: Encoding,
+    encoding: Encoding
 }
 
 impl Default for FontEncoding {
@@ -43,7 +38,7 @@ impl FontEncoding {
                 BaseEncoding::MacRomanEncoding.to_encoding().clone()
             } else {
                 BaseEncoding::WinAnsiEncoding.to_encoding().clone()
-            },
+            }
         }
     }
 
@@ -55,7 +50,7 @@ impl FontEncoding {
             } else {
                 BaseEncoding::WinAnsiEncoding
             },
-            encoding,
+            encoding
         }
     }
 
@@ -69,8 +64,9 @@ impl FontEncoding {
         self.encoding.name()
     }
 
-    /// Returns the base encoding, not to be confused with encoding.
-    /// The values are WinAnsiEncoding, MacRomanEncoding and MacExpertEncoding.
+    /// Returns the base encoding, not to be confused with encoding. The
+    /// values are WinAnsiEncoding, MacRomanEncoding and
+    /// MacExpertEncoding.
     pub fn base(&self) -> String {
         self.base.name()
     }
@@ -81,8 +77,8 @@ impl FontEncoding {
     //     self.base = MacExpertEncoding;
     // }
 
-    /// Convert a String to a vector of bytes in the encoding.
-    /// For examples, see the Encoding documentation.
+    /// Convert a String to a vector of bytes in the encoding. For examples,
+    /// see the Encoding documentation.
     pub fn encode_string(&self, text: &str) -> Vec<u8> {
         self.encoding.encode_string(text)
     }
@@ -91,15 +87,14 @@ impl FontEncoding {
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum BaseEncoding {
     WinAnsiEncoding,
-    MacRomanEncoding,
-    // MacExpertEncoding
+    MacRomanEncoding // MacExpertEncoding
 }
 
 impl BaseEncoding {
     pub fn to_encoding(self) -> &'static Encoding {
         match self {
             BaseEncoding::WinAnsiEncoding => &WIN_ANSI_ENCODING,
-            BaseEncoding::MacRomanEncoding => &MAC_ROMAN_ENCODING,
+            BaseEncoding::MacRomanEncoding => &MAC_ROMAN_ENCODING
             // MacExpertEncoding => &MAC_EXPERT_ENCODING,
         }
     }
@@ -107,31 +102,29 @@ impl BaseEncoding {
     pub fn name(self) -> String {
         match self {
             BaseEncoding::WinAnsiEncoding => "WinAnsiEncoding".to_string(),
-            BaseEncoding::MacRomanEncoding => "MacRomanEncoding".to_string(),
+            BaseEncoding::MacRomanEncoding => "MacRomanEncoding".to_string()
             // MacExpertEncoding => "MacExpertEncoding".to_string(),
         }
     }
 }
 
-/// Represent a text encoding used in PDF.
-/// An encoding maintains the connection between unicode code points,
-/// bytes in PDF strings, and glyph names.
+/// Represent a text encoding used in PDF. An encoding maintains the
+/// connection between unicode code points, bytes in PDF strings, and glyph
+/// names.
 ///
 /// Currently, only WIN_ANSI_ENCODING and MAC_ROMAN_ENCODING is supported.
 ///
 /// # Example
 /// ````
 /// use simple_pdf::{BuiltinFont, FontSource};
-/// assert_eq!("WinAnsiEncoding",
-///            BuiltinFont::Helvetica.encoding().name());
-/// assert_eq!("SymbolEncoding",
-///            BuiltinFont::Symbol.encoding().name());
+/// assert_eq!("WinAnsiEncoding", BuiltinFont::Helvetica.encoding().name());
+/// assert_eq!("SymbolEncoding", BuiltinFont::Symbol.encoding().name());
 /// ````
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct Encoding {
     name: String,
     name_to_code: BTreeMap<&'static str, u8>,
-    unicode_to_code: BTreeMap<char, u8>,
+    unicode_to_code: BTreeMap<char, u8>
 }
 
 impl Encoding {
@@ -139,12 +132,12 @@ impl Encoding {
     pub fn new(
         name: String,
         code: BTreeMap<&'static str, u8>,
-        unicode: BTreeMap<char, u8>,
+        unicode: BTreeMap<char, u8>
     ) -> Self {
         Encoding {
             name,
             name_to_code: code,
-            unicode_to_code: unicode,
+            unicode_to_code: unicode
         }
     }
 
@@ -152,26 +145,26 @@ impl Encoding {
     pub fn name(&self) -> String {
         self.name.clone()
     }
-    /// Get the encoded code point from a type1 character name.
-    /// Character names are case sensitive and contains only ascii letters.
-    /// If the name is not available in the encoding, or is not a proper
-    /// character name, None is returned.
+    /// Get the encoded code point from a type1 character name. Character
+    /// names are case sensitive and contain only ascii letters. If the name
+    /// is not available in the encoding, or is not a proper character name,
+    /// None is returned.
     ///
     /// # Example
     /// ````
     /// use simple_pdf::{BuiltinFont, FontSource};
     /// let enc = BuiltinFont::Helvetica.encoding();
-    /// assert_eq!(Some(32),  enc.get_code("space"));
-    /// assert_eq!(Some(65),  enc.get_code("A"));
+    /// assert_eq!(Some(32), enc.get_code("space"));
+    /// assert_eq!(Some(65), enc.get_code("A"));
     /// assert_eq!(Some(229), enc.get_code("aring"));
-    /// assert_eq!(None,      enc.get_code("Lslash"));
-    /// assert_eq!(None,      enc.get_code(""));
-    /// assert_eq!(None,      enc.get_code("☺"));
+    /// assert_eq!(None, enc.get_code("Lslash"));
+    /// assert_eq!(None, enc.get_code(""));
+    /// assert_eq!(None, enc.get_code("☺"));
     /// ````
     pub fn get_code(&self, name: &str) -> Option<u8> {
         match self.name_to_code.get(name) {
             Some(&code) => Some(code),
-            None => None,
+            None => None
         }
     }
 
@@ -182,13 +175,13 @@ impl Encoding {
     /// ````
     /// use simple_pdf::{BuiltinFont, FontSource};
     /// let enc = BuiltinFont::Helvetica.encoding();
-    /// assert_eq!(Some(b' '),  enc.encode_char(' '));
-    /// assert_eq!(Some(b'A'),  enc.encode_char('A'));
-    /// assert_eq!(Some(b'\\'),  enc.encode_char('\\'));
+    /// assert_eq!(Some(b' '), enc.encode_char(' '));
+    /// assert_eq!(Some(b'A'), enc.encode_char('A'));
+    /// assert_eq!(Some(b'\\'), enc.encode_char('\\'));
     /// assert_eq!(Some(229), enc.encode_char('å'));
-    /// assert_eq!(None,      enc.encode_char('Ł'));
-    /// assert_eq!(None,      enc.encode_char(char::from(0)));
-    /// assert_eq!(None,      enc.encode_char('☺'));
+    /// assert_eq!(None, enc.encode_char('Ł'));
+    /// assert_eq!(None, enc.encode_char(char::from(0)));
+    /// assert_eq!(None, enc.encode_char('☺'));
     /// ````
     pub fn encode_char(&self, ch: char) -> Option<u8> {
         self.unicode_to_code.get(&ch).cloned()
@@ -200,13 +193,19 @@ impl Encoding {
     /// use simple_pdf::{BuiltinFont, FontSource};
     /// let enc = BuiltinFont::Helvetica.encoding();
     /// let symb_enc = BuiltinFont::Symbol.encoding();
-    /// assert_eq!(vec!(65, 66, 67), enc.encode_string("ABC"));
-    /// assert_eq!(vec!(82, 228, 107, 115, 109, 246, 114, 103, 229, 115),
-    ///            enc.encode_string("Räksmörgås"));
-    /// assert_eq!(vec!(67, 111, 102, 102, 101, 101, 32, 128, 49, 46, 50, 48),
-    ///            enc.encode_string("Coffee €1.20"));
-    /// assert_eq!(vec!(97, 32, 206, 32, 194),
-    ///            symb_enc.encode_string("α ∈ ℜ"));
+    /// assert_eq!(vec![65, 66, 67], enc.encode_string("ABC"));
+    /// assert_eq!(
+    ///     vec![82, 228, 107, 115, 109, 246, 114, 103, 229, 115],
+    ///     enc.encode_string("Räksmörgås")
+    /// );
+    /// assert_eq!(
+    ///     vec![67, 111, 102, 102, 101, 101, 32, 128, 49, 46, 50, 48],
+    ///     enc.encode_string("Coffee €1.20")
+    /// );
+    /// assert_eq!(
+    ///     vec![97, 32, 206, 32, 194],
+    ///     symb_enc.encode_string("α ∈ ℜ")
+    /// );
     /// ````
     pub fn encode_string(&self, text: &str) -> Vec<u8> {
         let mut result = Vec::new();
@@ -225,7 +224,7 @@ impl Encoding {
                     result.push(b')')
                 }
                 Some(ch) => result.push(ch),
-                None => result.push(b'?'),
+                None => result.push(b'?')
             }
         }
         result

@@ -1,6 +1,9 @@
-use encoding::{Encoding, FontEncoding, MAC_ROMAN_ENCODING, SYMBOL_ENCODING, WIN_ANSI_ENCODING, ZAPFDINGBATS_ENCODING};
+use encoding::{
+    Encoding, FontEncoding, MAC_ROMAN_ENCODING, SYMBOL_ENCODING,
+    WIN_ANSI_ENCODING, ZAPFDINGBATS_ENCODING
+};
 use fontmetrics::{get_builtin_metrics, FontMetrics};
-use std::io::{self, Write};
+use std::io::{Result, Write};
 use units::Pt;
 use Pdf;
 
@@ -22,11 +25,11 @@ pub enum BuiltinFont {
     Times_Italic,
     Times_BoldItalic,
     Symbol,
-    ZapfDingbats,
+    ZapfDingbats
 }
 
 impl FontSource for BuiltinFont {
-    fn write_object(&self, pdf: &mut Pdf) -> io::Result<usize> {
+    fn write_object(&self, pdf: &mut Pdf) -> Result<usize> {
         pdf.write_new_object(|font_object_id, pdf| {
             writeln!(
                 pdf.output,
@@ -58,7 +61,7 @@ impl FontSource for BuiltinFont {
             Times_Italic => String::from("Times-Italic"),
             Times_BoldItalic => String::from("Times-BoldItalic"),
             Symbol => String::from("Symbol"),
-            ZapfDingbats => String::from("ZapfDingbats"),
+            ZapfDingbats => String::from("ZapfDingbats")
         }
     }
 
@@ -70,7 +73,7 @@ impl FontSource for BuiltinFont {
                 MAC_ROMAN_ENCODING.clone()
             } else {
                 WIN_ANSI_ENCODING.clone()
-            },
+            }
         }
     }
 
@@ -91,24 +94,24 @@ impl FontSource for BuiltinFont {
     }
 }
 
-/// Defines a font dictionary to represent text in specified font.
-/// At the moment, FontSource only supports Type1 fonts, e.g.
-/// the standard fonts (see BuiltinFont).
+/// Defines a font dictionary to represent text in specified font. At the
+/// moment, FontSource only supports Type1 fonts, e.g. the standard fonts (see
+/// BuiltinFont).
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub(crate) struct Font {
     name: String,
-    encoding: FontEncoding,
+    encoding: FontEncoding
 }
 
 impl Font {
     pub fn from_src<F: FontSource>(source: &F) -> Self {
         Self {
             name: source.name(),
-            encoding: FontEncoding::with_encoding(source.encoding().clone()),
+            encoding: FontEncoding::with_encoding(source.encoding().clone())
         }
     }
 
-    pub fn write_object(&self, pdf: &mut Pdf) -> io::Result<usize> {
+    pub fn write_object(&self, pdf: &mut Pdf) -> Result<usize> {
         pdf.write_new_object(|font_object_id, pdf| {
             writeln!(
                 pdf.output,
@@ -132,7 +135,7 @@ pub trait FontSource {
     ///
     /// This is called automatically for each font used in a document.
     /// There should be no need to call this method from user code.
-    fn write_object(&self, pdf: &mut Pdf) -> io::Result<usize>;
+    fn write_object(&self, pdf: &mut Pdf) -> Result<usize>;
 
     /// Get the PDF name of this font.
     ///
