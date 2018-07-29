@@ -1,4 +1,3 @@
-use self::BaseEncoding::*;
 use std::collections::BTreeMap;
 
 /// To represent the text correct and to conform to the PDF standard
@@ -21,7 +20,7 @@ use std::collections::BTreeMap;
 /// ````
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct FontEncoding {
-    base_encoding: BaseEncoding,
+    base: BaseEncoding,
     encoding: Encoding,
 }
 
@@ -35,15 +34,15 @@ impl FontEncoding {
     /// Creates a new FontEncoding with WinAnsiEncoding as default value.
     pub fn new() -> Self {
         FontEncoding {
-            base_encoding: if cfg!(target_os = "macos") {
-                MacRomanEncoding
+            base: if cfg!(target_os = "macos") {
+                BaseEncoding::MacRomanEncoding
             } else {
-                WinAnsiEncoding
+                BaseEncoding::WinAnsiEncoding
             },
             encoding: if cfg!(target_os = "macos") {
-                MacRomanEncoding.to_encoding().clone()
+                BaseEncoding::MacRomanEncoding.to_encoding().clone()
             } else {
-                WinAnsiEncoding.to_encoding().clone()
+                BaseEncoding::WinAnsiEncoding.to_encoding().clone()
             },
         }
     }
@@ -51,10 +50,10 @@ impl FontEncoding {
     /// Creates a new FontEncoding with the font's encoding.
     pub fn with_encoding(encoding: Encoding) -> Self {
         FontEncoding {
-            base_encoding: if cfg!(target_os = "macos") {
-                MacRomanEncoding
+            base: if cfg!(target_os = "macos") {
+                BaseEncoding::MacRomanEncoding
             } else {
-                WinAnsiEncoding
+                BaseEncoding::WinAnsiEncoding
             },
             encoding,
         }
@@ -66,20 +65,20 @@ impl FontEncoding {
     }
 
     /// Returns the name of the encoding.
-    pub fn enc_name(&self) -> String {
+    pub fn name(&self) -> String {
         self.encoding.name()
     }
 
     /// Returns the base encoding, not to be confused with encoding.
     /// The values are WinAnsiEncoding, MacRomanEncoding and MacExpertEncoding.
-    pub fn base_name(&self) -> String {
-        self.base_encoding.name()
+    pub fn base(&self) -> String {
+        self.base.name()
     }
 
     // /// Sets the base encoding to MacExpertEncoding. Only supported fonts
     // /// should use this.
     // pub fn set_expert_encoding(&self) {
-    //     self.base_encoding = MacExpertEncoding;
+    //     self.base = MacExpertEncoding;
     // }
 
     /// Convert a String to a vector of bytes in the encoding.
@@ -99,16 +98,16 @@ pub enum BaseEncoding {
 impl BaseEncoding {
     pub fn to_encoding(self) -> &'static Encoding {
         match self {
-            WinAnsiEncoding => &WIN_ANSI_ENCODING,
-            MacRomanEncoding => &MAC_ROMAN_ENCODING,
+            BaseEncoding::WinAnsiEncoding => &WIN_ANSI_ENCODING,
+            BaseEncoding::MacRomanEncoding => &MAC_ROMAN_ENCODING,
             // MacExpertEncoding => &MAC_EXPERT_ENCODING,
         }
     }
 
     pub fn name(self) -> String {
         match self {
-            WinAnsiEncoding => "WinAnsiEncoding".to_string(),
-            MacRomanEncoding => "MacRomanEncoding".to_string(),
+            BaseEncoding::WinAnsiEncoding => "WinAnsiEncoding".to_string(),
+            BaseEncoding::MacRomanEncoding => "MacRomanEncoding".to_string(),
             // MacExpertEncoding => "MacExpertEncoding".to_string(),
         }
     }
@@ -118,7 +117,7 @@ impl BaseEncoding {
 /// An encoding maintains the connection between unicode code points,
 /// bytes in PDF strings, and glyph names.
 ///
-/// Currently, only WIN_ANSI_ENCODING is supported.
+/// Currently, only WIN_ANSI_ENCODING and MAC_ROMAN_ENCODING is supported.
 ///
 /// # Example
 /// ````

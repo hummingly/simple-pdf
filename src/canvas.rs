@@ -1,6 +1,6 @@
 use fontref::FontRef;
 use fontsource::{Font, FontSource};
-use graphicsstate::*;
+use graphicsstate::{CapStyle, Color, JoinStyle, Matrix};
 use outline::OutlineItem;
 use std::collections::HashMap;
 use std::io::{self, Write};
@@ -12,9 +12,6 @@ use units::Pt;
 ///
 /// Provides methods for defining and stroking or filling paths, as
 /// well as placing text objects.
-///
-/// TODO Everything here that takes a `BuiltinFont` should take any
-/// `FontSource` instead.
 pub struct Canvas<'a> {
     output: &'a mut Write,
     fonts: &'a mut HashMap<Font, FontRef>,
@@ -93,8 +90,8 @@ impl<'a> Canvas<'a> {
         x2: U,
         y2: U,
     ) -> io::Result<()> {
-        self.move_to(x1.into(), y1.into())?;
-        self.line_to(x2.into(), y2.into())
+        self.move_to(x1, y1)?;
+        self.line_to(x2, y2)
     }
     /// Add a straight line from the current point to (x, y) to the
     /// current path.
@@ -166,10 +163,10 @@ impl<'a> Canvas<'a> {
         writeln!(self.output, "f")
     }
     /// Get a FontRef for a specific font.
-    pub fn get_font<F: FontSource>(&mut self, font: F) -> FontRef {
+    pub fn get_font<F: FontSource>(&mut self, font: &F) -> FontRef {
         let next_n = self.fonts.len();
         self.fonts
-            .entry(Font::from_src(&font))
+            .entry(Font::from_src(font))
             .or_insert_with(|| {
                 FontRef::new(next_n, font.encoding(), Arc::new(font.metrics()))
             })
@@ -196,7 +193,7 @@ impl<'a> Canvas<'a> {
         &mut self,
         x: U,
         y: U,
-        font: F,
+        font: &F,
         size: U,
         text: &str,
     ) -> io::Result<()> {
@@ -212,7 +209,7 @@ impl<'a> Canvas<'a> {
         &mut self,
         x: U,
         y: U,
-        font: F,
+        font: &F,
         size: U,
         text: &str,
     ) -> io::Result<()> {
@@ -230,7 +227,7 @@ impl<'a> Canvas<'a> {
         &mut self,
         x: U,
         y: U,
-        font: F,
+        font: &F,
         size: U,
         text: &str,
     ) -> io::Result<()> {

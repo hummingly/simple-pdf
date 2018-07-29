@@ -20,7 +20,7 @@ use units::Pt;
 ///
 /// # let mut document = Pdf::create("foo.pdf").unwrap();
 /// # document.render_page(180.0, 240.0, |canvas| {
-/// let serif = canvas.get_font(BuiltinFont::Times_Roman);
+/// let serif = canvas.get_font(&BuiltinFont::Times_Roman);
 /// // t will be a TextObject
 /// canvas.text(|t| {
 ///     t.set_font(&serif, 14.0)?;
@@ -137,7 +137,7 @@ impl<'a> TextObject<'a> {
     ///
     /// # let mut document = Pdf::create("foo.pdf").unwrap();
     /// # document.render_page(180.0, 240.0, |canvas| {
-    /// # let serif = canvas.get_font(BuiltinFont::Times_Roman);
+    /// # let serif = canvas.get_font(&BuiltinFont::Times_Roman);
     /// # canvas.text(|t| {
     /// #    t.set_font(&serif, 14.0)?;
     /// t.show_adjusted(&[("W", 130), ("AN", -40), ("D", 0)])

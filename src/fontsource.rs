@@ -1,4 +1,4 @@
-use encoding::*;
+use encoding::{Encoding, FontEncoding, MAC_ROMAN_ENCODING, SYMBOL_ENCODING, WIN_ANSI_ENCODING, ZAPFDINGBATS_ENCODING};
 use fontmetrics::{get_builtin_metrics, FontMetrics};
 use std::io::{self, Write};
 use units::Pt;
@@ -25,7 +25,6 @@ pub enum BuiltinFont {
     ZapfDingbats,
 }
 
-use BuiltinFont::*;
 impl FontSource for BuiltinFont {
     fn write_object(&self, pdf: &mut Pdf) -> io::Result<usize> {
         pdf.write_new_object(|font_object_id, pdf| {
@@ -44,6 +43,7 @@ impl FontSource for BuiltinFont {
     }
 
     fn name(&self) -> String {
+        use BuiltinFont::*;
         match *self {
             Courier => String::from("Courier"),
             Courier_Bold => String::from("Courier-Bold"),
@@ -64,8 +64,8 @@ impl FontSource for BuiltinFont {
 
     fn encoding(&self) -> Encoding {
         match *self {
-            Symbol => SYMBOL_ENCODING.clone(),
-            ZapfDingbats => ZAPFDINGBATS_ENCODING.clone(),
+            BuiltinFont::Symbol => SYMBOL_ENCODING.clone(),
+            BuiltinFont::ZapfDingbats => ZAPFDINGBATS_ENCODING.clone(),
             _ => if cfg!(target_os = "macos") {
                 MAC_ROMAN_ENCODING.clone()
             } else {
@@ -115,7 +115,7 @@ impl Font {
                 "<< /Type /Font /Subtype /Type1 /BaseFont /{} \
                  /Encoding /{} >>",
                 self.name,
-                self.encoding.base_name()
+                self.encoding.base()
             )?;
             Ok(font_object_id)
         })

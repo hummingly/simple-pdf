@@ -28,7 +28,7 @@
 //!     canvas.stroke()?;
 //!
 //!     // Some text
-//!     canvas.center_text(90.0, 200.0, font, 24.0, hello)
+//!     canvas.center_text(90.0, 200.0, &font, 24.0, hello)
 //! }).expect("Write page");
 //! // Write all pending content, including the trailer and index
 //! document.finish().expect("Finish pdf document");

@@ -22,18 +22,18 @@ fn main() {
             c.line(w.0 / 2.0, 10.0, w.0 / 2.0, h.0 - 10.0)?;
             c.stroke()?;
             let helvetica = BuiltinFont::Helvetica;
-            c.left_text(10.0, h.0 - 20.0, helvetica, 12.0, "Top left")?;
-            c.left_text(10.0, 10.0, helvetica, 12.0, "Bottom left")?;
-            c.right_text(w.0 - 10.0, h.0 - 20.0, helvetica, 12.0, "Top right")?;
-            c.right_text(w.0 - 10.0, 10.0, helvetica, 12.0, "Bottom right")?;
+            c.left_text(10.0, h.0 - 20.0, &helvetica, 12.0, "Top left")?;
+            c.left_text(10.0, 10.0, &helvetica, 12.0, "Bottom left")?;
+            c.right_text(w.0 - 10.0, h.0 - 20.0, &helvetica, 12.0, "Top right")?;
+            c.right_text(w.0 - 10.0, 10.0, &helvetica, 12.0, "Bottom right")?;
             c.center_text(
                 w.0 / 2.0,
                 h.0 - 30.0,
-                BuiltinFont::Times_Bold,
+                &BuiltinFont::Times_Bold,
                 24.0,
                 "Centered",
             )?;
-            let times = c.get_font(BuiltinFont::Times_Roman);
+            let times = c.get_font(&BuiltinFont::Times_Roman);
             c.text(|t| {
                 t.set_font(&times, 14.0)?;
                 t.set_leading(18.0)?;
@@ -55,14 +55,14 @@ fn main() {
             c.right_text(
                 w.0 - 10.0,
                 500.0,
-                times_italic,
+                &times_italic,
                 14.0,
                 "På svenska använder vi bokstäverna å, ä & ö",
             )?;
             c.right_text(
                 w.0 - 10.0,
                 480.0,
-                times_italic,
+                &times_italic,
                 14.0,
                 "i ord som slånbärslikör. Därför använder",
             )?;
@@ -70,7 +70,7 @@ fn main() {
             c.right_text(
                 w.0 - 10.0,
                 460.0,
-                times_italic,
+                &times_italic,
                 14.0,
                 "rust-pdf /WinAnsiEncoding för text.",
             )?;
@@ -78,14 +78,14 @@ fn main() {
             c.center_text(
                 w.0 / 2.0,
                 400.0,
-                BuiltinFont::Symbol,
+                &BuiltinFont::Symbol,
                 14.0,
                 "Hellas ΑΒΓΔαβγδ",
             )?;
             c.center_text(
                 w.0 / 2.0,
                 380.0,
-                BuiltinFont::Symbol,
+                &BuiltinFont::Symbol,
                 14.0,
                 "∀ μ < δ : ∃ σ ∈ Σ",
             )?;
@@ -93,7 +93,7 @@ fn main() {
             c.center_text(
                 w.0 / 2.0,
                 320.0,
-                BuiltinFont::ZapfDingbats,
+                &BuiltinFont::ZapfDingbats,
                 18.0,
                 "☎  ✌  ✖  ✤  ✰ ✴  ❐  ❝  ❤  ❞",
             )?;
