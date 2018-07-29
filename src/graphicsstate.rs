@@ -96,16 +96,12 @@ impl Color {
 impl Display for Color {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let norm = |c: u8| f32::from(c) / 255.0;
-        write!(
-            f,
-            "{}",
-            match *self {
-                Color::RGB { red, green, blue } => {
-                    format!("{} {} {}", norm(red), norm(green), norm(blue),)
-                }
-                Color::Gray { gray } => format!("{}", norm(gray))
+        match *self {
+            Color::RGB { red, green, blue } => {
+                write!(f, "{} {} {}", norm(red), norm(green), norm(blue))
             }
-        )
+            Color::Gray { gray } => write!(f, "{}", norm(gray))
+        }
     }
 }
 
