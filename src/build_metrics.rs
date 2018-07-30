@@ -3,17 +3,20 @@ extern crate lazy_static;
 
 use std::env;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Result, Write};
+use std::io::{BufRead, BufReader, BufWriter, Result, Write};
 use std::path::Path;
 
 #[allow(dead_code)]
 mod encoding;
 use encoding::{
-    Encoding, MAC_ROMAN_ENCODING, SYMBOL_ENCODING, WIN_ANSI_ENCODING,
-    ZAPFDINGBATS_ENCODING
+    get_base_enc, Encoding, SYMBOL_ENCODING, ZAPFDINGBATS_ENCODING
 };
 
-fn write_cond(f: &mut File, name: &str, encoding: &Encoding) -> Result<()> {
+fn write_cond(
+    f: &mut BufWriter<File>,
+    name: &str,
+    encoding: &Encoding
+) -> Result<()> {
     write!(
         f,
         "  static ref METRICS_{name}: FontMetrics = \
@@ -42,7 +45,8 @@ fn main() {
     let dst = Path::new(
         &env::var("OUT_DIR").expect("Could not find directory.")
     ).join("metrics_data.rs");
-    let f = &mut File::create(&dst).expect("Could not create file.");
+    let f = File::create(&dst).expect("Could not create file.");
+    let f = &mut BufWriter::new(f);
     let textfonts = [
         "Courier",
         "Courier_Bold",
@@ -80,14 +84,11 @@ fn main() {
          lazy_static! {{"
     ).expect("Could not write to file.");
 
+    let encoding = get_base_enc();
+
     for font in textfonts.iter().take(12) {
-        if cfg!(target_os = "macos") {
-            write_cond(f, font, &MAC_ROMAN_ENCODING)
-                .expect("Could not write to file.");
-        } else {
-            write_cond(f, font, &WIN_ANSI_ENCODING)
-                .expect("Could not write to file.");
-        };
+        write_cond(f, font, encoding.to_encoding())
+            .expect("Could not write to file.");
     }
 
     write_cond(f, "Symbol", &SYMBOL_ENCODING)

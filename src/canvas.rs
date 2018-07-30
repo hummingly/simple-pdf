@@ -3,7 +3,8 @@ use fontsource::{Font, FontSource};
 use graphicsstate::{CapStyle, Color, JoinStyle, Matrix};
 use outline::OutlineItem;
 use std::collections::HashMap;
-use std::io::{Result, Write};
+use std::fs::File;
+use std::io::{BufWriter, Result, Write};
 use std::sync::Arc;
 use textobject::TextObject;
 use units::Pt;
@@ -13,7 +14,7 @@ use units::Pt;
 /// Provides methods for defining and stroking or filling paths, as well as
 /// placing text objects.
 pub struct Canvas<'a> {
-    output: &'a mut Write,
+    output: &'a mut BufWriter<File>,
     fonts: &'a mut HashMap<Font, FontRef>,
     outline_items: &'a mut Vec<OutlineItem>
 }
@@ -21,7 +22,7 @@ pub struct Canvas<'a> {
 impl<'a> Canvas<'a> {
     // Should not be called by user code.
     pub(crate) fn new(
-        output: &'a mut Write,
+        output: &'a mut BufWriter<File>,
         fonts: &'a mut HashMap<Font, FontRef>,
         outline_items: &'a mut Vec<OutlineItem>
     ) -> Canvas<'a> {
@@ -154,7 +155,7 @@ impl<'a> Canvas<'a> {
         writeln!(self.output, "S")
     }
     /// Close and stroke the current path.
-    pub fn stroke_and_close(&mut self) -> Result<()> {
+    pub fn close_and_stroke(&mut self) -> Result<()> {
         writeln!(self.output, "s")
     }
     /// Fill the current path.
@@ -174,9 +175,9 @@ impl<'a> Canvas<'a> {
 
     /// Create a text object.
     ///
-    /// The contents of the text object is defined by the function `render_text`,
-    /// by applying methods to the TextObject it gets as an argument. On
-    /// success, returns the value returned by `render_text`.
+    /// The contents of the text object is defined by the function
+    /// `render_text`, by applying methods to the TextObject it gets as an
+    /// argument. On success, returns the value returned by `render_text`.
     pub fn text<F, T>(&mut self, render_text: F) -> Result<T>
     where
         F: FnOnce(&mut TextObject) -> Result<T>

@@ -25,31 +25,28 @@ impl Default for FontEncoding {
     }
 }
 
+pub(crate) fn get_base_enc() -> BaseEncoding {
+    if cfg!(target_os = "macos") {
+        BaseEncoding::MacRomanEncoding
+    } else {
+        BaseEncoding::WinAnsiEncoding
+    }
+}
+
 impl FontEncoding {
     /// Creates a new FontEncoding with WinAnsiEncoding as default value.
     pub fn new() -> Self {
+        let enc = get_base_enc();
         FontEncoding {
-            base: if cfg!(target_os = "macos") {
-                BaseEncoding::MacRomanEncoding
-            } else {
-                BaseEncoding::WinAnsiEncoding
-            },
-            encoding: if cfg!(target_os = "macos") {
-                BaseEncoding::MacRomanEncoding.to_encoding().clone()
-            } else {
-                BaseEncoding::WinAnsiEncoding.to_encoding().clone()
-            }
+            base: enc,
+            encoding: enc.to_encoding().clone()
         }
     }
 
     /// Creates a new FontEncoding with the font's encoding.
     pub fn with_encoding(encoding: Encoding) -> Self {
         FontEncoding {
-            base: if cfg!(target_os = "macos") {
-                BaseEncoding::MacRomanEncoding
-            } else {
-                BaseEncoding::WinAnsiEncoding
-            },
+            base: get_base_enc(),
             encoding
         }
     }
@@ -162,10 +159,7 @@ impl Encoding {
     /// assert_eq!(None, enc.get_code("☺"));
     /// ````
     pub fn get_code(&self, name: &str) -> Option<u8> {
-        match self.name_to_code.get(name) {
-            Some(&code) => Some(code),
-            None => None
-        }
+        self.name_to_code.get(name).cloned()
     }
 
     /// Get the encoded code point from a (unicode) character.

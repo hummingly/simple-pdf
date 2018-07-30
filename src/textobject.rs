@@ -1,7 +1,8 @@
-use encoding::{BaseEncoding, Encoding};
+use encoding::{get_base_enc, Encoding};
 use fontref::FontRef;
 use graphicsstate::Color;
-use std::io::{Result, Write};
+use std::fs::File;
+use std::io::{BufWriter, Result, Write};
 use units::Pt;
 
 /// A text object is where text is put on the canvas.
@@ -35,20 +36,16 @@ use units::Pt;
 /// # document.finish().unwrap();
 /// ```
 pub struct TextObject<'a> {
-    output: &'a mut Write,
+    output: &'a mut BufWriter<File>,
     encoding: Encoding
 }
 
 impl<'a> TextObject<'a> {
     // Should not be called by user code.
-    pub(crate) fn new(output: &mut Write) -> TextObject {
+    pub(crate) fn new(output: &mut BufWriter<File>) -> TextObject {
         TextObject {
             output,
-            encoding: if cfg!(target_os = "macos") {
-                BaseEncoding::MacRomanEncoding.to_encoding().clone()
-            } else {
-                BaseEncoding::WinAnsiEncoding.to_encoding().clone()
-            }
+            encoding: get_base_enc().to_encoding().clone()
         }
     }
     /// Set the font and font-size to be used by the following text operations.

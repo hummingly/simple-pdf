@@ -1,6 +1,6 @@
 use encoding::{
-    Encoding, FontEncoding, MAC_ROMAN_ENCODING, SYMBOL_ENCODING,
-    WIN_ANSI_ENCODING, ZAPFDINGBATS_ENCODING
+    get_base_enc, Encoding, FontEncoding, SYMBOL_ENCODING,
+    ZAPFDINGBATS_ENCODING
 };
 use fontmetrics::{get_builtin_metrics, FontMetrics};
 use std::io::{Result, Write};
@@ -69,11 +69,7 @@ impl FontSource for BuiltinFont {
         match *self {
             BuiltinFont::Symbol => SYMBOL_ENCODING.clone(),
             BuiltinFont::ZapfDingbats => ZAPFDINGBATS_ENCODING.clone(),
-            _ => if cfg!(target_os = "macos") {
-                MAC_ROMAN_ENCODING.clone()
-            } else {
-                WIN_ANSI_ENCODING.clone()
-            }
+            _ => get_base_enc().to_encoding().clone()
         }
     }
 

@@ -53,7 +53,6 @@ fn main() {
                     &(-19..21).map(|i| ("o", 16 * i)).collect::<Vec<_>>()
                 )
             })?;
-            
 
             //In Swedish, we use the letters å, ä, and ö
             //in words like sloe liqueur.  That is why rust-pdf

@@ -51,7 +51,7 @@ extern crate time;
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 use std::fs::File;
-use std::io::{Result, Seek, SeekFrom, Write};
+use std::io::{BufWriter, Result, Seek, SeekFrom, Write};
 
 mod fontsource;
 use fontsource::Font;
@@ -88,7 +88,7 @@ use units::Pt;
 /// Don't forget to call `finish` when done, to write the document trailer,
 /// without it the written file won't be a proper PDF.
 pub struct Pdf {
-    output: File,
+    output: BufWriter<File>,
     object_offsets: Vec<i64>,
     page_objects_ids: Vec<usize>,
     font_object_ids: HashMap<Font, usize>,
@@ -96,6 +96,7 @@ pub struct Pdf {
     document_info: BTreeMap<String, String>
 }
 
+const DEFAULT_BUF_SIZE: usize = 65_536;
 const ROOT_OBJECT_ID: usize = 1;
 const PAGES_OBJECT_ID: usize = 2;
 
@@ -111,7 +112,7 @@ impl Pdf {
         // TODO Maybe use a lower version?  Possibly decide by features used?
         output.write_all(b"%PDF-1.7\n%\xB5\xED\xAE\xFB\n")?;
         Ok(Pdf {
-            output,
+            output: BufWriter::with_capacity(DEFAULT_BUF_SIZE, output),
             // Object ID 0 is special in PDF.
             // We reserve IDs 1 and 2 for the catalog and page tree.
             object_offsets: vec![-1, -1, -1],
@@ -163,7 +164,7 @@ impl Pdf {
     /// Create a new page in the PDF document.
     ///
     /// The page will be `width` x `height` points large, and the actual
-    /// content of the page will be created by the function `render_page` by
+    /// content of the page will be created by the function `render_contents` by
     /// applying drawing methods on the Canvas.
     pub fn render_page<F, U>(
         &mut self,
@@ -206,13 +207,13 @@ impl Pdf {
         })?;
 
         let mut font_oids = NamedRefs::new();
-        for (src, r) in &fonts {
+        for (src, r) in fonts {
             if let Some(&object_id) = self.font_object_ids.get(&src) {
-                font_oids.insert(r.clone(), object_id);
+                font_oids.insert(r, object_id);
             } else {
                 let object_id = src.write_object(self)?;
-                font_oids.insert(r.clone(), object_id);
-                self.font_object_ids.insert(src.to_owned(), object_id);
+                font_oids.insert(r, object_id);
+                self.font_object_ids.insert(src, object_id);
             }
         }
         let page_oid = self.write_page_dict(
@@ -223,8 +224,7 @@ impl Pdf {
         )?;
         // Take the outline_items from this page, mark them with the page ref,
         // and save them for the document outline.
-        for i in &outline_items {
-            let mut item = i.clone();
+        for mut item in outline_items {
             item.set_page(page_oid);
             self.outline_items.push(item);
         }
