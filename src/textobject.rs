@@ -54,7 +54,7 @@ impl<'a> TextObject<'a> {
         font: &FontRef,
         size: U
     ) -> Result<()> {
-        self.encoding = font.encoding();
+        self.encoding = font.encoding().clone();
         writeln!(self.output, "{} {} Tf", font, size.into())
     }
     /// Set leading, the vertical distance from a line of text to the next.

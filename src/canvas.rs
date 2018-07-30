@@ -168,7 +168,11 @@ impl<'a> Canvas<'a> {
         self.fonts
             .entry(Font::from_src(font))
             .or_insert_with(|| {
-                FontRef::new(next_n, font.encoding(), Arc::new(font.metrics()))
+                FontRef::new(
+                    next_n,
+                    font.encoding().clone(),
+                    Arc::new(font.metrics())
+                )
             })
             .clone()
     }

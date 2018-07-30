@@ -52,8 +52,8 @@ impl FontEncoding {
     }
 
     /// Returns the encoding of each character for a font.
-    pub fn encoding(&self) -> Encoding {
-        self.encoding.clone()
+    pub fn encoding(&self) -> &Encoding {
+        &self.encoding
     }
 
     /// Returns the name of the encoding.
@@ -64,7 +64,7 @@ impl FontEncoding {
     /// Returns the base encoding, not to be confused with encoding. The
     /// values are WinAnsiEncoding, MacRomanEncoding and
     /// MacExpertEncoding.
-    pub fn base(&self) -> String {
+    pub fn base_name(&self) -> String {
         self.base.name()
     }
 
@@ -512,6 +512,7 @@ lazy_static! {
     };
 
     pub static ref MAC_ROMAN_ENCODING: Encoding = {
+        // the encoding is closer to the StandardEncoding
         let mut codes = STANDARD_ENCODING.unicode_to_code.clone();
         let mut names = STANDARD_ENCODING.name_to_code.clone();
         {
@@ -638,8 +639,8 @@ lazy_static! {
 
     // http://ftp.unicode.org/Public/MAPPINGS/VENDORS/ADOBE/symbol.txt
     pub static ref SYMBOL_ENCODING: Encoding = {
-        let mut codes = STANDARD_ENCODING.unicode_to_code.clone();
-        let mut names = STANDARD_ENCODING.name_to_code.clone();
+        let mut codes = BTreeMap::new();
+        let mut names = BTreeMap::new();
         {
             let mut enc = |ch: char, name: &'static str, code: u8| {
                 codes.insert(ch, code);
@@ -845,8 +846,8 @@ lazy_static! {
 
     // https://unicode.org/Public/MAPPINGS/VENDORS/ADOBE/zdingbat.txt
     pub static ref ZAPFDINGBATS_ENCODING: Encoding = {
-        let mut codes = STANDARD_ENCODING.unicode_to_code.clone();
-        let mut names = STANDARD_ENCODING.name_to_code.clone();
+        let mut codes = BTreeMap::new();;
+        let mut names = BTreeMap::new();;
         {
             let mut enc = |ch: char, name: &'static str, code: u8| {
                 codes.insert(ch, code);

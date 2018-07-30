@@ -3,6 +3,7 @@ use encoding::{
     ZAPFDINGBATS_ENCODING
 };
 use fontmetrics::{get_builtin_metrics, FontMetrics};
+use std::fmt;
 use std::io::{Result, Write};
 use units::Pt;
 use Pdf;
@@ -34,7 +35,7 @@ impl FontSource for BuiltinFont {
             writeln!(
                 pdf.output,
                 "<< /Type /Font /Subtype /Type1 /BaseFont /{} /Encoding /{} >>",
-                self.name(),
+                *self,
                 if cfg!(target_os = "macos") {
                     "MacRomanEncoding"
                 } else {
@@ -46,30 +47,14 @@ impl FontSource for BuiltinFont {
     }
 
     fn name(&self) -> String {
-        use BuiltinFont::*;
-        match *self {
-            Courier => String::from("Courier"),
-            Courier_Bold => String::from("Courier-Bold"),
-            Courier_Oblique => String::from("Courier-Oblique"),
-            Courier_BoldOblique => String::from("Courier-BoldOblique"),
-            Helvetica => String::from("Helvetica"),
-            Helvetica_Bold => String::from("Helvetica-Bold"),
-            Helvetica_Oblique => String::from("Helvetica-Oblique"),
-            Helvetica_BoldOblique => String::from("Helvetica-BoldOblique"),
-            Times_Roman => String::from("Times-Roman"),
-            Times_Bold => String::from("Times-Bold"),
-            Times_Italic => String::from("Times-Italic"),
-            Times_BoldItalic => String::from("Times-BoldItalic"),
-            Symbol => String::from("Symbol"),
-            ZapfDingbats => String::from("ZapfDingbats")
-        }
+        format!("{}", *self)
     }
 
-    fn encoding(&self) -> Encoding {
+    fn encoding(&self) -> &'static Encoding {
         match *self {
-            BuiltinFont::Symbol => SYMBOL_ENCODING.clone(),
-            BuiltinFont::ZapfDingbats => ZAPFDINGBATS_ENCODING.clone(),
-            _ => get_base_enc().to_encoding().clone()
+            BuiltinFont::Symbol => &SYMBOL_ENCODING,
+            BuiltinFont::ZapfDingbats => &ZAPFDINGBATS_ENCODING,
+            _ => get_base_enc().to_encoding()
         }
     }
 
@@ -87,6 +72,28 @@ impl FontSource for BuiltinFont {
 
     fn metrics(&self) -> FontMetrics {
         get_builtin_metrics(*self).clone()
+    }
+}
+
+impl fmt::Display for BuiltinFont {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let name = match *self {
+            BuiltinFont::Courier => "Courier",
+            BuiltinFont::Courier_Bold => "Courier-Bold",
+            BuiltinFont::Courier_Oblique => "Courier-Oblique",
+            BuiltinFont::Courier_BoldOblique => "Courier-BoldOblique",
+            BuiltinFont::Helvetica => "Helvetica",
+            BuiltinFont::Helvetica_Bold => "Helvetica-Bold",
+            BuiltinFont::Helvetica_Oblique => "Helvetica-Oblique",
+            BuiltinFont::Helvetica_BoldOblique => "Helvetica-BoldOblique",
+            BuiltinFont::Times_Roman => "Times-Roman",
+            BuiltinFont::Times_Bold => "Times-Bold",
+            BuiltinFont::Times_Italic => "Times-Italic",
+            BuiltinFont::Times_BoldItalic => "Times-BoldItalic",
+            BuiltinFont::Symbol => "Symbol",
+            BuiltinFont::ZapfDingbats => "ZapfDingbats"
+        };
+        write!(f, "{}", name)
     }
 }
 
@@ -114,7 +121,7 @@ impl Font {
                 "<< /Type /Font /Subtype /Type1 /BaseFont /{} \
                  /Encoding /{} >>",
                 self.name,
-                self.encoding.base()
+                self.encoding.base_name()
             )?;
             Ok(font_object_id)
         })
@@ -143,7 +150,7 @@ pub trait FontSource {
     fn name(&self) -> String;
 
     /// Get the encoding that this font uses.
-    fn encoding(&self) -> Encoding;
+    fn encoding(&self) -> &Encoding;
 
     /// Get the width of a string in this font at given size.
     ///

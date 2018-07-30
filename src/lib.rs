@@ -81,6 +81,32 @@ pub use textobject::TextObject;
 pub mod units;
 use units::Pt;
 
+const DEFAULT_BUF_SIZE: usize = 65_536;
+const ROOT_OBJECT_ID: usize = 1;
+const PAGES_OBJECT_ID: usize = 2;
+
+#[derive(Debug, Ord, PartialOrd, PartialEq, Eq, Hash, Copy, Clone)]
+enum MetaData {
+    Author,
+    Creator,
+    Producer,
+    Subject,
+    Title
+}
+
+impl fmt::Display for MetaData {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let meta = match *self {
+            MetaData::Author => "Author",
+            MetaData::Creator => "Creator",
+            MetaData::Producer => "Producer",
+            MetaData::Subject => "Subject",
+            MetaData::Title => "Title"
+        };
+        write!(f, "{}", meta)
+    }
+}
+
 /// The top-level object for writing a PDF.
 ///
 /// A PDF file is created with the `create` or `new` methods. Some metadata can
@@ -94,12 +120,8 @@ pub struct Pdf {
     page_objects_ids: Vec<usize>,
     font_object_ids: HashMap<Font, usize>,
     outline_items: Vec<OutlineItem>,
-    document_info: BTreeMap<String, String>
+    document_info: BTreeMap<MetaData, String>
 }
-
-const DEFAULT_BUF_SIZE: usize = 65_536;
-const ROOT_OBJECT_ID: usize = 1;
-const PAGES_OBJECT_ID: usize = 2;
 
 impl Pdf {
     /// Create a new PDF document as a new file with given filename.
@@ -126,35 +148,35 @@ impl Pdf {
     /// Set metadata: the document's title.
     pub fn set_title(&mut self, title: &str) {
         self.document_info
-            .insert("Title".to_string(), title.to_string());
+            .insert(MetaData::Title, title.to_string());
     }
     /// Set metadata: the name of the person who created the document.
     pub fn set_author(&mut self, author: &str) {
         self.document_info
-            .insert("Author".to_string(), author.to_string());
+            .insert(MetaData::Author, author.to_string());
     }
     /// Set metadata: the subject of the document.
     pub fn set_subject(&mut self, subject: &str) {
         self.document_info
-            .insert("Subject".to_string(), subject.to_string());
+            .insert(MetaData::Subject, subject.to_string());
     }
     /// Set metadata: keywords associated with the document.
     pub fn set_keywords(&mut self, keywords: &str) {
         self.document_info
-            .insert("Subject".to_string(), keywords.to_string());
+            .insert(MetaData::Subject, keywords.to_string());
     }
     /// Set metadata: If the document was converted to PDF from another format,
     /// the name of the conforming product that created the original document
     /// from which it was converted.
     pub fn set_creator(&mut self, creator: &str) {
         self.document_info
-            .insert("Creator".to_string(), creator.to_string());
+            .insert(MetaData::Creator, creator.to_string());
     }
     /// Set metadata: If the document was converted to PDF from another format,
     /// the name of the conforming product that converted it to PDF.
     pub fn set_producer(&mut self, producer: &str) {
         self.document_info
-            .insert("Producer".to_string(), producer.to_string());
+            .insert(MetaData::Producer, producer.to_string());
     }
 
     /// Return the current read/write position in the output file.
@@ -366,7 +388,7 @@ impl Pdf {
         )?;
         // Object 0 (above) is special
         // Use [1..] to skip object 0 in self.object_offsets.
-        for &offset in &self.object_offsets[1..] {
+        for &offset in self.object_offsets.iter().skip(1) {
             assert!(offset >= 0);
             writeln!(self.output, "{:010} 00000 n ", offset)?;
         }
