@@ -85,10 +85,14 @@ const DEFAULT_BUF_SIZE: usize = 65_536;
 const ROOT_OBJECT_ID: usize = 1;
 const PAGES_OBJECT_ID: usize = 2;
 
+// sorted manually alphabetical
 #[derive(Debug, Ord, PartialOrd, PartialEq, Eq, Hash, Copy, Clone)]
 enum MetaData {
     Author,
+    CreationDate,
     Creator,
+    Keywords,
+    ModDate,
     Producer,
     Subject,
     Title
@@ -98,7 +102,10 @@ impl fmt::Display for MetaData {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let meta = match *self {
             MetaData::Author => "Author",
+            MetaData::CreationDate => "CreationDate",
             MetaData::Creator => "Creator",
+            MetaData::Keywords => "Keywords",
+            MetaData::ModDate => "ModDate",
             MetaData::Producer => "Producer",
             MetaData::Subject => "Subject",
             MetaData::Title => "Title"
@@ -163,7 +170,7 @@ impl Pdf {
     /// Set metadata: keywords associated with the document.
     pub fn set_keywords(&mut self, keywords: &str) {
         self.document_info
-            .insert(MetaData::Subject, keywords.to_string());
+            .insert(MetaData::Keywords, keywords.to_string());
     }
     /// Set metadata: If the document was converted to PDF from another format,
     /// the name of the conforming product that created the original document
@@ -351,9 +358,11 @@ impl Pdf {
                 {
                     write!(
                         pdf.output,
-                        " /CreationDate (D:{now})\n \
-                         /ModDate (D:{now})",
-                        now = now
+                        " /{creation} (D:{now})\n \
+                         /{modify} (D:{now})",
+                        now = now,
+                        creation = MetaData::CreationDate,
+                        modify = MetaData::ModDate
                     )?;
                 }
                 writeln!(pdf.output, ">>")?;
