@@ -52,6 +52,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 use std::fs::File;
 use std::io::{BufWriter, Result, Seek, SeekFrom, Write};
+use std::mem;
 
 mod fontsource;
 use fontsource::Font;
@@ -116,7 +117,7 @@ impl Pdf {
             // Object ID 0 is special in PDF.
             // We reserve IDs 1 and 2 for the catalog and page tree.
             object_offsets: vec![-1, -1, -1],
-            page_objects_ids: vec![],
+            page_objects_ids: Vec::new(),
             font_object_ids: HashMap::new(),
             outline_items: Vec::new(),
             document_info: BTreeMap::new()
@@ -189,7 +190,7 @@ impl Pdf {
                 let start = pdf.tell()?;
                 writeln!(pdf.output, "/DeviceRGB cs /DeviceRGB CS")?;
                 let mut fonts = HashMap::new();
-                let mut outline_items: Vec<OutlineItem> = Vec::new();
+                let mut outline_items = Vec::new();
                 render_contents(&mut Canvas::new(
                     &mut pdf.output,
                     &mut fonts,
@@ -318,7 +319,7 @@ impl Pdf {
             )
         })?;
         let document_info_id = if !self.document_info.is_empty() {
-            let info = self.document_info.clone();
+            let info = mem::replace(&mut self.document_info, BTreeMap::new());
             self.write_new_object(|page_object_id, pdf| {
                 write!(pdf.output, "<<")?;
                 for (key, value) in info {
@@ -401,7 +402,7 @@ impl Pdf {
         let count = self.outline_items.len();
         let mut first_id = 0;
         let mut last_id = 0;
-        let items = self.outline_items.clone();
+        let items = mem::replace(&mut self.outline_items, Vec::new());
         for (i, item) in items.iter().enumerate() {
             let (is_first, is_last) = (i == 0, i == count - 1);
             let id = self.write_new_object(|object_id, pdf| {
