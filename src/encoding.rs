@@ -235,171 +235,171 @@ impl Encoding {
 
 lazy_static! {
     // https://unicode.org/Public/MAPPINGS/VENDORS/ADOBE/stdenc.txt
-    pub static ref STANDARD_ENCODING: Encoding = {
-        let mut codes = BTreeMap::new();
-        let mut names = BTreeMap::new();
-        {
-            let mut enc = |ch: char, name: &'static str, code: u8| {
-                codes.insert(ch, code);
-                names.insert(name, code);
-            };
-            enc(' ', "space", 0o40);
-            enc(' ', "space", 0o40);
-            enc('!', "exclam", 0o41);
-            enc('"', "quotedbl", 0o42);
-            enc('#', "numbersign", 0o43);
-            enc('$', "dollar", 0o44);
-            enc('%', "percent", 0o45);
-            enc('&', "ampersand", 0o46);
-            enc('’', "quoteright", 0o47);
-            enc('(', "parenleft", 0o50);
-            enc(')', "parenright", 0o51);
-            enc('*', "asterisk", 0o52);
-            enc('+', "plus", 0o53);
-            enc(',', "comma", 0o54);
-            enc('-', "hyphen", 0o55);
-            enc('­', "hyphen", 0o55);
-            enc('.', "period", 0o56);
-            enc('/', "slash", 0o57);
-            enc('0', "zero", 0o60);
-            enc('1', "one", 0o61);
-            enc('2', "two", 0o62);
-            enc('3', "three", 0o63);
-            enc('4', "four", 0o64);
-            enc('5', "five", 0o65);
-            enc('6', "six", 0o66);
-            enc('7', "seven", 0o67);
-            enc('8', "eight", 0o70);
-            enc('9', "nine", 0o71);
-            enc(':', "colon", 0o72);
-            enc(';', "semicolon", 0o73);
-            enc('<', "less", 0o74);
-            enc('=', "equal", 0o75);
-            enc('>', "greater", 0o76);
-            enc('?', "question", 0o77);
-            enc('@', "at", 0o100);
-            enc('A', "A", 0o101);
-            enc('B', "B", 0o102);
-            enc('C', "C", 0o103);
-            enc('D', "D", 0o104);
-            enc('E', "E", 0o105);
-            enc('F', "F", 0o106);
-            enc('G', "G", 0o107);
-            enc('H', "H", 0o110);
-            enc('I', "I", 0o111);
-            enc('J', "J", 0o112);
-            enc('K', "K", 0o113);
-            enc('L', "L", 0o114);
-            enc('M', "M", 0o115);
-            enc('N', "N", 0o116);
-            enc('O', "O", 0o117);
-            enc('P', "P", 0o120);
-            enc('Q', "Q", 0o121);
-            enc('R', "R", 0o122);
-            enc('S', "S", 0o123);
-            enc('T', "T", 0o124);
-            enc('U', "U", 0o125);
-            enc('V', "V", 0o126);
-            enc('W', "W", 0o127);
-            enc('X', "X", 0o130);
-            enc('Y', "Y", 0o131);
-            enc('Z', "Z", 0o132);
-            enc('[', "bracketleft", 0o133);
-            enc('\\', "backslash", 0o134);
-            enc(']', "bracketright", 0o135);
-            enc('^', "asciicircum", 0o136);
-            enc('_', "underscore", 0o137);
-            enc('‘', "quoteleft", 0o140);
-            enc('a', "a", 0o141);
-            enc('b', "b", 0o142);
-            enc('c', "c", 0o143);
-            enc('d', "d", 0o144);
-            enc('e', "e", 0o145);
-            enc('f', "f", 0o146);
-            enc('g', "g", 0o147);
-            enc('h', "h", 0o150);
-            enc('i', "i", 0o151);
-            enc('j', "j", 0o152);
-            enc('k', "k", 0o153);
-            enc('l', "l", 0o154);
-            enc('m', "m", 0o155);
-            enc('n', "n", 0o156);
-            enc('o', "o", 0o157);
-            enc('p', "p", 0o160);
-            enc('q', "q", 0o161);
-            enc('r', "r", 0o162);
-            enc('s', "s", 0o163);
-            enc('t', "t", 0o164);
-            enc('u', "u", 0o165);
-            enc('v', "v", 0o166);
-            enc('w', "w", 0o167);
-            enc('x', "x", 0o170);
-            enc('y', "y", 0o171);
-            enc('z', "z", 0o172);
-            enc('{', "braceleft", 0o173);
-            enc('|', "bar", 0o174);
-            enc('}', "braceright", 0o175);
-            enc('~', "asciitilde", 0o176);
-            enc('¡', "exclamdown", 0o241);
-            enc('¢', "cent", 0o242);
-            enc('£', "sterling", 0o243);
-            enc('⁄', "fraction", 0o244);
-            enc('∕', "fraction", 0o244);
-            enc('¥', "yen", 0o245);
-            enc('ƒ', "florin", 0o246);
-            enc('§', "section", 0o247);
-            enc('¤', "currency", 0o250);
-            enc('\'', "quotesingle", 0o251);
-            enc('“', "quotedblleft", 0o252);
-            enc('«', "guillemotleft", 0o253);
-            enc('‹', "guilsinglleft", 0o254);
-            enc('›', "guilsinglright", 0o255);
-            enc('ﬁ', "fi", 0o256);
-            enc('ﬂ', "fl", 0o257);
-            enc('–', "endash", 0o261);
-            enc('†', "dagger", 0o262);
-            enc('‡', "daggerdbl", 0o263);
-            enc('·', "periodcentered", 0o264);
-            enc('∙', "periodcentered", 0o264);
-            enc('¶', "paragraph", 0o266);
-            enc('•', "bullet", 0o267);
-            enc('‚', "quotesinglbase", 0o270);
-            enc('„', "quotedblbase", 0o271);
-            enc('”', "quotedblright", 0o272);
-            enc('»', "guillemotright", 0o273);
-            enc('…', "ellipsis", 0o274);
-            enc('‰', "perthousand", 0o275);
-            enc('¿', "questiondown", 0o277);
-            enc('`', "grave", 0o301);
-            enc('´', "acute", 0o302);
-            enc('ˆ', "circumflex", 0o303);
-            enc('˜', "tilde", 0o304);
-            enc('¯', "macron", 0o305);
-            enc('ˉ', "macron", 0o305);
-            enc('˘', "breve", 0o306);
-            enc('˙', "dotaccent", 0o307);
-            enc('¨', "dieresis", 0o310);
-            enc('˚', "ring", 0o312);
-            enc('¸', "cedilla", 0o313);
-            enc('˝', "hungarumlaut", 0o315);
-            enc('˛', "ogonek", 0o316);
-            enc('ˇ', "caron", 0o317);
-            enc('—', "emdash", 0o320);
-            enc('Æ', "AE", 0o341);
-            enc('ª', "ordfeminine", 0o343);
-            enc('Ł', "Lslash", 0o350);
-            enc('Ø', "Oslash", 0o351);
-            enc('Œ', "OE", 0o352);
-            enc('º', "ordmasculine", 0o353);
-            enc('æ', "ae", 0o361);
-            enc('ı', "dotlessi", 0o365);
-            enc('ł', "lslash", 0o370);
-            enc('ø', "oslash", 0o371);
-            enc('œ', "oe", 0o372);
-            enc('ß', "germandbls", 0o373);
-        }
-        Encoding::new("StandardEncoding".to_string(), names, codes)
-    };
+    // pub static ref STANDARD_ENCODING: Encoding = {
+    //     let mut codes = BTreeMap::new();
+    //     let mut names = BTreeMap::new();
+    //     {
+    //         let mut enc = |ch: char, name: &'static str, code: u8| {
+    //             codes.insert(ch, code);
+    //             names.insert(name, code);
+    //         };
+    //         enc(' ', "space", 0o40);
+    //         enc(' ', "space", 0o40);
+    //         enc('!', "exclam", 0o41);
+    //         enc('"', "quotedbl", 0o42);
+    //         enc('#', "numbersign", 0o43);
+    //         enc('$', "dollar", 0o44);
+    //         enc('%', "percent", 0o45);
+    //         enc('&', "ampersand", 0o46);
+    //         enc('’', "quoteright", 0o47);
+    //         enc('(', "parenleft", 0o50);
+    //         enc(')', "parenright", 0o51);
+    //         enc('*', "asterisk", 0o52);
+    //         enc('+', "plus", 0o53);
+    //         enc(',', "comma", 0o54);
+    //         enc('-', "hyphen", 0o55);
+    //         enc('­', "hyphen", 0o55);
+    //         enc('.', "period", 0o56);
+    //         enc('/', "slash", 0o57);
+    //         enc('0', "zero", 0o60);
+    //         enc('1', "one", 0o61);
+    //         enc('2', "two", 0o62);
+    //         enc('3', "three", 0o63);
+    //         enc('4', "four", 0o64);
+    //         enc('5', "five", 0o65);
+    //         enc('6', "six", 0o66);
+    //         enc('7', "seven", 0o67);
+    //         enc('8', "eight", 0o70);
+    //         enc('9', "nine", 0o71);
+    //         enc(':', "colon", 0o72);
+    //         enc(';', "semicolon", 0o73);
+    //         enc('<', "less", 0o74);
+    //         enc('=', "equal", 0o75);
+    //         enc('>', "greater", 0o76);
+    //         enc('?', "question", 0o77);
+    //         enc('@', "at", 0o100);
+    //         enc('A', "A", 0o101);
+    //         enc('B', "B", 0o102);
+    //         enc('C', "C", 0o103);
+    //         enc('D', "D", 0o104);
+    //         enc('E', "E", 0o105);
+    //         enc('F', "F", 0o106);
+    //         enc('G', "G", 0o107);
+    //         enc('H', "H", 0o110);
+    //         enc('I', "I", 0o111);
+    //         enc('J', "J", 0o112);
+    //         enc('K', "K", 0o113);
+    //         enc('L', "L", 0o114);
+    //         enc('M', "M", 0o115);
+    //         enc('N', "N", 0o116);
+    //         enc('O', "O", 0o117);
+    //         enc('P', "P", 0o120);
+    //         enc('Q', "Q", 0o121);
+    //         enc('R', "R", 0o122);
+    //         enc('S', "S", 0o123);
+    //         enc('T', "T", 0o124);
+    //         enc('U', "U", 0o125);
+    //         enc('V', "V", 0o126);
+    //         enc('W', "W", 0o127);
+    //         enc('X', "X", 0o130);
+    //         enc('Y', "Y", 0o131);
+    //         enc('Z', "Z", 0o132);
+    //         enc('[', "bracketleft", 0o133);
+    //         enc('\\', "backslash", 0o134);
+    //         enc(']', "bracketright", 0o135);
+    //         enc('^', "asciicircum", 0o136);
+    //         enc('_', "underscore", 0o137);
+    //         enc('‘', "quoteleft", 0o140);
+    //         enc('a', "a", 0o141);
+    //         enc('b', "b", 0o142);
+    //         enc('c', "c", 0o143);
+    //         enc('d', "d", 0o144);
+    //         enc('e', "e", 0o145);
+    //         enc('f', "f", 0o146);
+    //         enc('g', "g", 0o147);
+    //         enc('h', "h", 0o150);
+    //         enc('i', "i", 0o151);
+    //         enc('j', "j", 0o152);
+    //         enc('k', "k", 0o153);
+    //         enc('l', "l", 0o154);
+    //         enc('m', "m", 0o155);
+    //         enc('n', "n", 0o156);
+    //         enc('o', "o", 0o157);
+    //         enc('p', "p", 0o160);
+    //         enc('q', "q", 0o161);
+    //         enc('r', "r", 0o162);
+    //         enc('s', "s", 0o163);
+    //         enc('t', "t", 0o164);
+    //         enc('u', "u", 0o165);
+    //         enc('v', "v", 0o166);
+    //         enc('w', "w", 0o167);
+    //         enc('x', "x", 0o170);
+    //         enc('y', "y", 0o171);
+    //         enc('z', "z", 0o172);
+    //         enc('{', "braceleft", 0o173);
+    //         enc('|', "bar", 0o174);
+    //         enc('}', "braceright", 0o175);
+    //         enc('~', "asciitilde", 0o176);
+    //         enc('¡', "exclamdown", 0o241);
+    //         enc('¢', "cent", 0o242);
+    //         enc('£', "sterling", 0o243);
+    //         enc('⁄', "fraction", 0o244);
+    //         enc('∕', "fraction", 0o244);
+    //         enc('¥', "yen", 0o245);
+    //         enc('ƒ', "florin", 0o246);
+    //         enc('§', "section", 0o247);
+    //         enc('¤', "currency", 0o250);
+    //         enc('\'', "quotesingle", 0o251);
+    //         enc('“', "quotedblleft", 0o252);
+    //         enc('«', "guillemotleft", 0o253);
+    //         enc('‹', "guilsinglleft", 0o254);
+    //         enc('›', "guilsinglright", 0o255);
+    //         enc('ﬁ', "fi", 0o256);
+    //         enc('ﬂ', "fl", 0o257);
+    //         enc('–', "endash", 0o261);
+    //         enc('†', "dagger", 0o262);
+    //         enc('‡', "daggerdbl", 0o263);
+    //         enc('·', "periodcentered", 0o264);
+    //         enc('∙', "periodcentered", 0o264);
+    //         enc('¶', "paragraph", 0o266);
+    //         enc('•', "bullet", 0o267);
+    //         enc('‚', "quotesinglbase", 0o270);
+    //         enc('„', "quotedblbase", 0o271);
+    //         enc('”', "quotedblright", 0o272);
+    //         enc('»', "guillemotright", 0o273);
+    //         enc('…', "ellipsis", 0o274);
+    //         enc('‰', "perthousand", 0o275);
+    //         enc('¿', "questiondown", 0o277);
+    //         enc('`', "grave", 0o301);
+    //         enc('´', "acute", 0o302);
+    //         enc('ˆ', "circumflex", 0o303);
+    //         enc('˜', "tilde", 0o304);
+    //         enc('¯', "macron", 0o305);
+    //         enc('ˉ', "macron", 0o305);
+    //         enc('˘', "breve", 0o306);
+    //         enc('˙', "dotaccent", 0o307);
+    //         enc('¨', "dieresis", 0o310);
+    //         enc('˚', "ring", 0o312);
+    //         enc('¸', "cedilla", 0o313);
+    //         enc('˝', "hungarumlaut", 0o315);
+    //         enc('˛', "ogonek", 0o316);
+    //         enc('ˇ', "caron", 0o317);
+    //         enc('—', "emdash", 0o320);
+    //         enc('Æ', "AE", 0o341);
+    //         enc('ª', "ordfeminine", 0o343);
+    //         enc('Ł', "Lslash", 0o350);
+    //         enc('Ø', "Oslash", 0o351);
+    //         enc('Œ', "OE", 0o352);
+    //         enc('º', "ordmasculine", 0o353);
+    //         enc('æ', "ae", 0o361);
+    //         enc('ı', "dotlessi", 0o365);
+    //         enc('ł', "lslash", 0o370);
+    //         enc('ø', "oslash", 0o371);
+    //         enc('œ', "oe", 0o372);
+    //         enc('ß', "germandbls", 0o373);
+    //     }
+    //     Encoding::new("StandardEncoding".to_string(), names, codes)
+    // };
 
     pub static ref WIN_ANSI_ENCODING: Encoding = {
         let mut codes = BTreeMap::new();
@@ -513,8 +513,11 @@ lazy_static! {
 
     pub static ref MAC_ROMAN_ENCODING: Encoding = {
         // the encoding is closer to the StandardEncoding
-        let mut codes = STANDARD_ENCODING.unicode_to_code.clone();
-        let mut names = STANDARD_ENCODING.name_to_code.clone();
+        let mut codes = BTreeMap::new();
+        let mut names = BTreeMap::new();
+        for code in 32..255 {
+            codes.insert(code as char, code);
+        }
         {
             let mut enc = |ch: char, name: &'static str, code: u8| {
                 codes.insert(ch, code);
@@ -641,6 +644,9 @@ lazy_static! {
     pub static ref SYMBOL_ENCODING: Encoding = {
         let mut codes = BTreeMap::new();
         let mut names = BTreeMap::new();
+        for code in 32..255 {
+            codes.insert(code as char, code);
+        }
         {
             let mut enc = |ch: char, name: &'static str, code: u8| {
                 codes.insert(ch, code);
@@ -846,8 +852,11 @@ lazy_static! {
 
     // https://unicode.org/Public/MAPPINGS/VENDORS/ADOBE/zdingbat.txt
     pub static ref ZAPFDINGBATS_ENCODING: Encoding = {
-        let mut codes = BTreeMap::new();;
-        let mut names = BTreeMap::new();;
+        let mut codes = BTreeMap::new();
+        let mut names = BTreeMap::new();
+        for code in 32..255 {
+            codes.insert(code as char, code);
+        }
         {
             let mut enc = |ch: char, name: &'static str, code: u8| {
                 codes.insert(ch, code);

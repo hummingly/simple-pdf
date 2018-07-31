@@ -396,7 +396,6 @@ impl Pdf {
             self.object_offsets.len()
         )?;
         // Object 0 (above) is special
-        // Use [1..] to skip object 0 in self.object_offsets.
         for &offset in self.object_offsets.iter().skip(1) {
             assert!(offset >= 0);
             writeln!(self.output, "{:010} 00000 n ", offset)?;
