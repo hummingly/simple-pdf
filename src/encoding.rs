@@ -406,7 +406,7 @@ lazy_static! {
         // /WinAnsiEncoding is kind of close to first byte of unicode
         // Except for the 16 chars that are reserved in 8859-1 and
         // used in Windows-1252.
-        for code in 32..255 {
+        for code in 1..255 {
             codes.insert(code as char, code);
         }
         codes.insert('€', 128);
@@ -515,7 +515,7 @@ lazy_static! {
         // the encoding is closer to the StandardEncoding
         let mut codes = BTreeMap::new();
         let mut names = BTreeMap::new();
-        for code in 32..255 {
+        for code in 1..255 {
             codes.insert(code as char, code);
         }
         {
@@ -644,7 +644,7 @@ lazy_static! {
     pub static ref SYMBOL_ENCODING: Encoding = {
         let mut codes = BTreeMap::new();
         let mut names = BTreeMap::new();
-        for code in 32..255 {
+        for code in 1..255 {
             codes.insert(code as char, code);
         }
         {
@@ -854,7 +854,7 @@ lazy_static! {
     pub static ref ZAPFDINGBATS_ENCODING: Encoding = {
         let mut codes = BTreeMap::new();
         let mut names = BTreeMap::new();
-        for code in 32..255 {
+        for code in 1..255 {
             codes.insert(code as char, code);
         }
         {
