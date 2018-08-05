@@ -42,9 +42,9 @@ fn write_cond(
 }
 
 fn main() {
-    let dst = Path::new(
-        &env::var("OUT_DIR").expect("Could not find directory.")
-    ).join("metrics_data.rs");
+    let dst =
+        Path::new(&env::var("OUT_DIR").expect("Could not find directory."))
+            .join("metrics_data.rs");
     let f = File::create(&dst).expect("Could not create file.");
     let f = &mut BufWriter::new(f);
     let textfonts = [
