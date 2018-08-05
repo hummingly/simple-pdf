@@ -1,6 +1,7 @@
 use encoding::{get_base_enc, Encoding};
 use fontref::FontRef;
 use graphicsstate::Color;
+use std::fmt;
 use std::fs::File;
 use std::io::{BufWriter, Result, Write};
 use units::Pt;
@@ -56,6 +57,11 @@ impl<'a> TextObject<'a> {
     ) -> Result<()> {
         self.encoding = font.encoding().clone();
         writeln!(self.output, "{} {} Tf", font, size.into())
+    }
+    /// Set text render mode, which enables rendering text filled, stroked or
+    /// as clipping boundary.
+    pub fn set_render_mode(&mut self, mode: RenderMode) -> Result<()> {
+        writeln!(self.output, "{} Tr", mode)
     }
     /// Set leading, the vertical distance from a line of text to the next.
     /// This is important for the [show_line](#method.show_line) method.
@@ -156,5 +162,45 @@ impl<'a> TextObject<'a> {
     pub fn grestore(&mut self) -> Result<()> {
         // TODO Pop current encoding in self?
         writeln!(self.output, "Q")
+    }
+}
+
+/// Text rendering mode has no effect on Type 3 fonts.
+#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+pub enum RenderMode {
+    /// Fills text glyphs with nonstroking color.
+    Fill,
+    /// Draws outline of text glyphs with stroking color.
+    Stroke,
+    /// Fills, then strokes text.
+    FillAndStroke,
+    /// Renders the text invisible.
+    Invisible,
+    /// Adds the filled text glyphs to clipping path.
+    FillAndClipping,
+    /// Adds the stroked text glyphs to clipping path.
+    StrokeAndClipping,
+    /// Adds the filled, then stroked text glyphs to clipping path.
+    FillAndStrokeAndClipping,
+    /// Adds text to clipping path
+    Clipping
+}
+
+impl fmt::Display for RenderMode {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match *self {
+                RenderMode::Fill => 0,
+                RenderMode::Stroke => 1,
+                RenderMode::FillAndStroke => 2,
+                RenderMode::Invisible => 3,
+                RenderMode::FillAndClipping => 4,
+                RenderMode::StrokeAndClipping => 5,
+                RenderMode::FillAndStrokeAndClipping => 6,
+                RenderMode::Clipping => 7
+            }
+        )
     }
 }

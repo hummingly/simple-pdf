@@ -17,6 +17,7 @@ fn main() {
     document
         .render_page(Mm(210.0), Mm(297.0), |c| {
             c.set_stroke_color(Color::rgb(200, 200, 255))?;
+            c.set_dash(&[Pt(1.0), Pt(2.5)], -0.5)?;
             c.rectangle(10.0, 10.0, w.0 - 20.0, h.0 - 20.0)?;
             c.line(10.0, h.0 / 2.0, w.0 - 10.0, h.0 / 2.0)?;
             c.line(w.0 / 2.0, 10.0, w.0 / 2.0, h.0 - 10.0)?;
@@ -104,7 +105,6 @@ fn main() {
                 "☎  ✌  ✖  ✤  ✰ ✴  ❐  ❝  ❤  ❞"
             )?;
             Ok(())
-        })
-        .unwrap();
+        }).unwrap();
     document.finish().unwrap();
 }

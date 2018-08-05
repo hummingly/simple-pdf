@@ -34,7 +34,8 @@ pub(crate) fn get_base_enc() -> BaseEncoding {
 }
 
 impl FontEncoding {
-    /// Creates a new FontEncoding with WinAnsiEncoding as default value.
+    /// Creates a new FontEncoding with the plattform encoding (WinAnsiEncoding
+    /// or MacRomanEncoding) as default value.
     pub fn new() -> Self {
         let enc = get_base_enc();
         FontEncoding {
@@ -202,33 +203,26 @@ impl Encoding {
     /// );
     /// ````
     pub fn encode_string(&self, text: &str) -> Vec<u8> {
-        let mut result = Vec::new();
+        let mut result = Vec::with_capacity(text.len());
         for ch in text.chars() {
             match self.encode_char(ch) {
-                Some(b'\\') => {
-                    result.push(b'\\');
-                    result.push(b'\\')
-                }
-                Some(b'(') => {
-                    result.push(b'\\');
-                    result.push(b'(')
-                }
-                Some(b')') => {
-                    result.push(b'\\');
-                    result.push(b')')
-                }
-                Some(ch) => result.push(ch),
+                Some(ch) => match ch {
+                    b'\\' | b'(' | b')' => {
+                        result.push(b'\\');
+                        result.push(ch)
+                    }
+                    _ => result.push(ch)
+                },
                 None => result.push(b'?')
             }
         }
+        result.shrink_to_fit();
         result
     }
 
     fn init_block(&mut self, start: u8, data: Vec<&'static str>) {
-        let mut i = start - 1;
-        for name in data {
-            i += 1;
-            self.name_to_code.insert(name, i);
+        for (i, name) in data.iter().enumerate() {
+            self.name_to_code.insert(name, start + (i as u8));
         }
     }
 }
@@ -406,7 +400,7 @@ lazy_static! {
         // /WinAnsiEncoding is kind of close to first byte of unicode
         // Except for the 16 chars that are reserved in 8859-1 and
         // used in Windows-1252.
-        for code in 1..255 {
+        for code in 1..=255 {
             codes.insert(code as char, code);
         }
         codes.insert('€', 128);

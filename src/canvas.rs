@@ -59,8 +59,37 @@ impl<'a> Canvas<'a> {
         writeln!(self.output, "{} J", style)
     }
     /// Set the line width in the graphics state.
-    pub fn set_line_width<U: Into<Pt>>(&mut self, w: U) -> Result<()> {
-        writeln!(self.output, "{} w", w.into())
+    pub fn set_line_width<U: Into<Pt>>(&mut self, width: U) -> Result<()> {
+        writeln!(self.output, "{} w", width.into())
+    }
+    /// Set the line dash pattern in the graphics state. Values must not be
+    /// negative, or all array values must not be 0. If this happens the
+    /// operation is not executed.
+    pub fn set_dash<U: Into<Pt>>(
+        &mut self,
+        pattern: &[Pt],
+        phase: U
+    ) -> Result<()> {
+        if pattern.is_empty() {
+            return Ok(());
+        }
+
+        let mut valid_array = false;
+        for dash in pattern {
+            if dash.0.is_sign_positive() && dash.0 != 0.0 {
+                valid_array = true;
+                break;
+            }
+        }
+        if valid_array {
+            write!(self.output, "[ ")?;
+            for dash in pattern {
+                write!(self.output, "{} ", dash)?;
+            }
+            writeln!(self.output, "] {} d", phase.into())
+        } else {
+            Ok(())
+        }
     }
     /// Set color for stroking operations.
     pub fn set_stroke_color(&mut self, color: Color) -> Result<()> {
@@ -79,8 +108,8 @@ impl<'a> Canvas<'a> {
 
     /// Modify the current transformation matrix for coordinates by
     /// concatenating the specified matrix.
-    pub fn concat(&mut self, m: &Matrix) -> Result<()> {
-        writeln!(self.output, "{} cm", m)
+    pub fn concat(&mut self, matrix: &Matrix) -> Result<()> {
+        writeln!(self.output, "{} cm", matrix)
     }
 
     /// Append a straight line from (x1, y1) to (x2, y2) to the current path.

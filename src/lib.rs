@@ -28,8 +28,7 @@
 //!
 //!         // Some text
 //!         canvas.center_text(90.0, 200.0, &font, 24.0, hello)
-//!     })
-//!     .expect("Write page");
+//!     }).expect("Write page");
 //! // Write all pending content, including the trailer and index
 //! document.finish().expect("Finish pdf document");
 //! ```
@@ -76,7 +75,7 @@ mod canvas;
 pub use canvas::Canvas;
 
 mod textobject;
-pub use textobject::TextObject;
+pub use textobject::{RenderMode, TextObject};
 
 pub mod units;
 use units::Pt;
@@ -206,8 +205,8 @@ impl Pdf {
         F: FnOnce(&mut Canvas) -> Result<()>,
         U: Into<Pt>
     {
-        let (contents_object_id, content_length, fonts, outline_items) = self
-            .write_new_object(move |contents_object_id, pdf| {
+        let (contents_object_id, content_length, fonts, outline_items) =
+            self.write_new_object(move |contents_object_id, pdf| {
                 // Guess the ID of the next object. (We’ll assert it below.)
                 writeln!(
                     pdf.output,
@@ -236,7 +235,7 @@ impl Pdf {
             writeln!(pdf.output, "{}", content_length)
         })?;
 
-        let mut font_oids = NamedRefs::new();
+        let mut font_oids = NamedRefs::with_capacity(fonts.len());
         for (src, r) in fonts {
             if let Some(&object_id) = self.font_object_ids.get(&src) {
                 font_oids.insert(r, object_id);
@@ -333,20 +332,19 @@ impl Pdf {
     /// startxref position.
     pub fn finish(mut self) -> Result<()> {
         self.write_object_with_id(PAGES_OBJECT_ID, |pdf| {
-            writeln!(
+            write!(
                 pdf.output,
                 "<< /Type /Pages\n   \
                  /Count {c}\n   \
-                 /Kids [ {pages}]\n\
-                 >>",
-                c = pdf.page_objects_ids.len(),
-                pages = pdf
-                    .page_objects_ids
-                    .iter()
-                    .map(|id| format!("{} 0 R ", id))
-                    .collect::<String>()
-            )
+                 /Kids [ ",
+                c = pdf.page_objects_ids.len()
+            )?;
+            for &page in &pdf.page_objects_ids {
+                write!(pdf.output, "{} 0 R ", page)?;
+            }
+            writeln!(pdf.output, "]\n>>")
         })?;
+        
         let document_info_id = if !self.document_info.is_empty() {
             let info = mem::replace(&mut self.document_info, BTreeMap::new());
             self.write_new_object(|page_object_id, pdf| {
@@ -472,9 +470,9 @@ struct NamedRefs {
 }
 
 impl NamedRefs {
-    fn new() -> Self {
+    fn with_capacity(capacity: usize) -> Self {
         NamedRefs {
-            oids: HashMap::new()
+            oids: HashMap::with_capacity(capacity)
         }
     }
 
