@@ -45,7 +45,6 @@ fn main() {
             }
 
             Ok(())
-        })
-        .unwrap();
+        }).unwrap();
     document.finish().unwrap();
 }

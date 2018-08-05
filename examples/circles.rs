@@ -43,7 +43,6 @@ fn main() {
                 c.line_to(x + r * phi.cos(), y + r * phi.sin())?;
             }
             c.close_and_stroke()
-        })
-        .unwrap();
+        }).unwrap();
     document.finish().unwrap();
 }

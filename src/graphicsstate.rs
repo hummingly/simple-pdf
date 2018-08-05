@@ -1,7 +1,7 @@
 //! Types for representing details in the graphics state.
 
 use std::f32::consts::PI;
-use std::fmt::{self, Display};
+use std::fmt;
 use std::ops::Mul;
 
 /// Line join styles, as described in section 8.4.3.4 of the PDF specification.
@@ -16,7 +16,7 @@ pub enum JoinStyle {
     Bevel
 }
 
-impl Display for JoinStyle {
+impl fmt::Display for JoinStyle {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -42,7 +42,7 @@ pub enum CapStyle {
     ProjectingSquare
 }
 
-impl Display for CapStyle {
+impl fmt::Display for CapStyle {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
@@ -93,7 +93,7 @@ impl Color {
     }
 }
 
-impl Display for Color {
+impl fmt::Display for Color {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let norm = |c: u8| f32::from(c) / 255.0;
         match *self {
@@ -171,7 +171,7 @@ impl Matrix {
     }
 }
 
-impl Display for Matrix {
+impl fmt::Display for Matrix {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let v = self.v;
         write!(f, "{} {} {} {} {} {}", v[0], v[1], v[2], v[3], v[4], v[5])
