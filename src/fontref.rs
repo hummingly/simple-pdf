@@ -2,7 +2,7 @@ use encoding::Encoding;
 use fontmetrics::FontMetrics;
 use std::fmt;
 use std::sync::Arc;
-use units::Pt;
+use units::{LengthUnit, UserSpace};
 
 /// A font ready to be used in a TextObject.
 ///
@@ -21,7 +21,7 @@ use units::Pt;
 pub struct FontRef {
     n: usize,
     encoding: Encoding,
-    metrics: Arc<FontMetrics>
+    metrics: Arc<FontMetrics>,
 }
 
 impl FontRef {
@@ -29,12 +29,12 @@ impl FontRef {
     pub(crate) fn new(
         n: usize,
         encoding: Encoding,
-        metrics: Arc<FontMetrics>
-    ) -> FontRef {
+        metrics: Arc<FontMetrics>,
+    ) -> Self {
         FontRef {
             n,
             encoding,
-            metrics
+            metrics,
         }
     }
     /// Get the encoding used by the referenced font.
@@ -43,8 +43,12 @@ impl FontRef {
     }
 
     /// Get the width of the given text in this font at given size.
-    pub fn text_width<U: Into<Pt>>(&self, size: U, text: &str) -> Pt {
-        Pt(size.into().0 * self.raw_text_width(text) as f32 / 1000.0)
+    pub fn text_width<T: LengthUnit>(
+        &self,
+        size: UserSpace<T>,
+        text: &str,
+    ) -> UserSpace<T> {
+        size * self.raw_text_width(text) as f32 / 1000.0
     }
 
     /// Get the width of the given text in thousands of unit of text
@@ -57,7 +61,7 @@ impl FontRef {
                 self.encoding
                     .encode_char(ch)
                     .and_then(|ch| self.metrics.get_width(ch))
-                    .unwrap_or(100)
+                    .unwrap_or(100),
             )
         })
     }

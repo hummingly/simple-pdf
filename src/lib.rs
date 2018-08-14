@@ -7,30 +7,36 @@
 //! # Example
 //!
 //! ```
+//! #[macro_use]
+//! extern crate simple_pdf;
+//!
 //! use simple_pdf::graphicsstate::Color;
+//! use simple_pdf::units::{Points, UserSpace, LengthUnit};
 //! use simple_pdf::{BuiltinFont, FontSource, Pdf};
+//! use std::io;
 //!
-//! let mut document = Pdf::create("example.pdf").expect("Create pdf file");
-//! // The 14 builtin fonts are available
-//! let font = BuiltinFont::Times_Roman;
+//! fn main() -> io::Result<()> {
+//!     let mut document = Pdf::create("example.pdf")?;
+//!     // The 14 builtin fonts are available
+//!     let font = BuiltinFont::Times_Roman;
 //!
-//! // Add a page to the document.  This page will be 180 by 240 pt large.
-//! document
-//!     .render_page(180.0, 240.0, |canvas| {
+//!     // Add a page to the document. This page will be 180 by 240 pt large.
+//!     document.render_page(pt!(180), pt!(240), |canvas| {
 //!         // This closure defines the content of the page
 //!         let hello = "Hello World!";
-//!         let w = font.text_width(24.0, hello).0 + 8.0;
+//!         let w = font.text_width(pt!(24), hello) + pt!(8);
 //!
 //!         // Some simple graphics
 //!         canvas.set_stroke_color(Color::rgb(0, 0, 248))?;
-//!         canvas.rectangle(90.0 - w / 2.0, 194.0, w, 26.0)?;
+//!         canvas.rectangle(pt!(90) - w / 2, pt!(194), w, pt!(26))?;
 //!         canvas.stroke()?;
 //!
 //!         // Some text
-//!         canvas.center_text(90.0, 200.0, &font, 24.0, hello)
-//!     }).expect("Write page");
-//! // Write all pending content, including the trailer and index
-//! document.finish().expect("Finish pdf document");
+//!         canvas.center_text(pt!(90), pt!(200), &font, pt!(24), hello)
+//!     })?;
+//!     // Write all pending content, including the trailer and index
+//!     document.finish()
+//! }
 //! ```
 //!
 //! To use this library you need to add it as a dependency in your
@@ -52,6 +58,10 @@ use std::fmt;
 use std::fs::File;
 use std::io::{BufWriter, Result, Seek, SeekFrom, Write};
 use std::mem;
+
+#[macro_use]
+pub mod units;
+use units::{LengthUnit, UserSpace};
 
 mod fontsource;
 use fontsource::Font;
@@ -77,12 +87,9 @@ pub use canvas::Canvas;
 mod textobject;
 pub use textobject::{RenderMode, TextObject};
 
-pub mod units;
-use units::Pt;
-
 const DEFAULT_BUF_SIZE: usize = 65_536;
 const ROOT_OBJECT_ID: usize = 1;
-const PAGES_OBJECT_ID: usize = 2;
+const PAGE_OBJECT_ID: usize = 2;
 
 // sorted manually alphabetical
 #[derive(Debug, Ord, PartialOrd, PartialEq, Eq, Hash, Copy, Clone)]
@@ -94,7 +101,7 @@ enum MetaData {
     ModDate,
     Producer,
     Subject,
-    Title
+    Title,
 }
 
 impl fmt::Display for MetaData {
@@ -107,7 +114,7 @@ impl fmt::Display for MetaData {
             MetaData::ModDate => "ModDate",
             MetaData::Producer => "Producer",
             MetaData::Subject => "Subject",
-            MetaData::Title => "Title"
+            MetaData::Title => "Title",
         };
         write!(f, "{}", meta)
     }
@@ -123,10 +130,10 @@ impl fmt::Display for MetaData {
 pub struct Pdf {
     output: BufWriter<File>,
     object_offsets: Vec<i64>,
-    page_objects_ids: Vec<usize>,
+    page_object_ids: Vec<usize>,
     font_object_ids: HashMap<Font, usize>,
-    outline_items: Vec<OutlineItem>,
-    document_info: BTreeMap<MetaData, String>
+    outline: Vec<OutlineItem>,
+    info: BTreeMap<MetaData, String>,
 }
 
 impl Pdf {
@@ -145,44 +152,38 @@ impl Pdf {
             // Object ID 0 is special in PDF.
             // We reserve IDs 1 and 2 for the catalog and page tree.
             object_offsets: vec![-1, -1, -1],
-            page_objects_ids: Vec::new(),
+            page_object_ids: Vec::new(),
             font_object_ids: HashMap::new(),
-            outline_items: Vec::new(),
-            document_info: BTreeMap::new()
+            outline: Vec::new(),
+            info: BTreeMap::new(),
         })
     }
     /// Set metadata: the document's title.
     pub fn set_title(&mut self, title: &str) {
-        self.document_info
-            .insert(MetaData::Title, title.to_string());
+        self.info.insert(MetaData::Title, title.to_string());
     }
     /// Set metadata: the name of the person who created the document.
     pub fn set_author(&mut self, author: &str) {
-        self.document_info
-            .insert(MetaData::Author, author.to_string());
+        self.info.insert(MetaData::Author, author.to_string());
     }
     /// Set metadata: the subject of the document.
     pub fn set_subject(&mut self, subject: &str) {
-        self.document_info
-            .insert(MetaData::Subject, subject.to_string());
+        self.info.insert(MetaData::Subject, subject.to_string());
     }
     /// Set metadata: keywords associated with the document.
     pub fn set_keywords(&mut self, keywords: &str) {
-        self.document_info
-            .insert(MetaData::Keywords, keywords.to_string());
+        self.info.insert(MetaData::Keywords, keywords.to_string());
     }
     /// Set metadata: If the document was converted to PDF from another format,
     /// the name of the conforming product that created the original document
     /// from which it was converted.
     pub fn set_creator(&mut self, creator: &str) {
-        self.document_info
-            .insert(MetaData::Creator, creator.to_string());
+        self.info.insert(MetaData::Creator, creator.to_string());
     }
     /// Set metadata: If the document was converted to PDF from another format,
     /// the name of the conforming product that converted it to PDF.
     pub fn set_producer(&mut self, producer: &str) {
-        self.document_info
-            .insert(MetaData::Producer, producer.to_string());
+        self.info.insert(MetaData::Producer, producer.to_string());
     }
 
     /// Return the current read/write position in the output file.
@@ -195,78 +196,74 @@ impl Pdf {
     /// The page will be `width` x `height` points large, and the actual
     /// content of the page will be created by the function `render_contents` by
     /// applying drawing methods on the Canvas.
-    pub fn render_page<F, U>(
+    pub fn render_page<F, T>(
         &mut self,
-        width: U,
-        height: U,
-        render_contents: F
+        width: UserSpace<T>,
+        height: UserSpace<T>,
+        render_contents: F,
     ) -> Result<()>
     where
         F: FnOnce(&mut Canvas) -> Result<()>,
-        U: Into<Pt>
+        T: LengthUnit,
     {
-        let (contents_object_id, content_length, fonts, outline_items) =
-            self.write_new_object(move |contents_object_id, pdf| {
+        let (content_object_id, content_length, fonts, outline) = self
+            .write_new_object(move |content_object_id, pdf| {
                 // Guess the ID of the next object. (We’ll assert it below.)
                 writeln!(
                     pdf.output,
                     "<< /Length {} 0 R >>\n\
                      stream",
-                    contents_object_id + 1
+                    content_object_id + 1
                 )?;
 
                 let start = pdf.tell()?;
                 writeln!(pdf.output, "/DeviceRGB cs /DeviceRGB CS")?;
                 let mut fonts = HashMap::new();
-                let mut outline_items = Vec::new();
+                let mut outline = Vec::new();
                 render_contents(&mut Canvas::new(
                     &mut pdf.output,
                     &mut fonts,
-                    &mut outline_items
+                    &mut outline,
                 ))?;
                 let end = pdf.tell()?;
 
                 writeln!(pdf.output, "endstream")?;
-                Ok((contents_object_id, end - start, fonts, outline_items))
+                Ok((content_object_id, end - start, fonts, outline))
             })?;
 
-        self.write_new_object(|length_object_id, pdf| {
-            assert!(length_object_id == contents_object_id + 1);
+        self.write_new_object(|object_id_length, pdf| {
+            assert!(object_id_length == content_object_id + 1);
             writeln!(pdf.output, "{}", content_length)
         })?;
 
         let mut font_oids = NamedRefs::with_capacity(fonts.len());
-        for (src, r) in fonts {
-            if let Some(&object_id) = self.font_object_ids.get(&src) {
-                font_oids.insert(r, object_id);
+        for (source, fontref) in fonts {
+            if let Some(&object_id) = self.font_object_ids.get(&source) {
+                font_oids.insert(fontref, object_id);
             } else {
-                let object_id = src.write_object(self)?;
-                font_oids.insert(r, object_id);
-                self.font_object_ids.insert(src, object_id);
+                let object_id = source.write_object(self)?;
+                font_oids.insert(fontref, object_id);
+                self.font_object_ids.insert(source, object_id);
             }
         }
-        let page_oid = self.write_page_dict(
-            contents_object_id,
-            width.into(),
-            height.into(),
-            &font_oids
-        )?;
-        // Take the outline_items from this page, mark them with the page ref,
+        let page_oid =
+            self.write_page_dict(content_object_id, width, height, &font_oids)?;
+        // Take the outline from this page, mark them with the page ref,
         // and save them for the document outline.
-        for mut item in outline_items {
+        for mut item in outline {
             item.set_page(page_oid);
-            self.outline_items.push(item);
+            self.outline.push(item);
         }
-        self.page_objects_ids.push(page_oid);
+        self.page_object_ids.push(page_oid);
         Ok(())
     }
 
-    fn write_page_dict(
+    fn write_page_dict<T: LengthUnit>(
         &mut self,
         content_oid: usize,
-        width: Pt,
-        height: Pt,
-        font_oids: &NamedRefs
+        width: UserSpace<T>,
+        height: UserSpace<T>,
+        font_oids: &NamedRefs,
     ) -> Result<usize> {
         self.write_new_object(|page_oid, pdf| {
             writeln!(
@@ -274,21 +271,21 @@ impl Pdf {
                 "<< /Type /Page\n   \
                  /Parent {parent} 0 R\n   \
                  /Resources << /Font << {fonts}>> >>\n   \
-                 /MediaBox [ 0 0 {width} {height} ]\n   \
-                 /Contents {c_oid} 0 R\n\
+                 /MediaBox [0 0 {width} {height}]\n   \
+                 /Contents {content} 0 R\n\
                  >>",
-                parent = PAGES_OBJECT_ID,
+                parent = PAGE_OBJECT_ID,
                 fonts = font_oids,
                 width = width,
                 height = height,
-                c_oid = content_oid
+                content = content_oid
             ).map(|_| page_oid)
         })
     }
 
     fn write_new_object<F, T>(&mut self, write_content: F) -> Result<T>
     where
-        F: FnOnce(usize, &mut Pdf) -> Result<T>
+        F: FnOnce(usize, &mut Pdf) -> Result<T>,
     {
         let id = self.object_offsets.len();
         let (result, offset) =
@@ -300,10 +297,10 @@ impl Pdf {
     fn write_object_with_id<F, T>(
         &mut self,
         id: usize,
-        write_content: F
+        write_content: F,
     ) -> Result<T>
     where
-        F: FnOnce(&mut Pdf) -> Result<T>
+        F: FnOnce(&mut Pdf) -> Result<T>,
     {
         assert!(self.object_offsets[id] == -1);
         let (result, offset) = self.write_object(id, write_content)?;
@@ -314,10 +311,10 @@ impl Pdf {
     fn write_object<F, T>(
         &mut self,
         id: usize,
-        write_content: F
+        write_content: F,
     ) -> Result<(T, i64)>
     where
-        F: FnOnce(&mut Pdf) -> Result<T>
+        F: FnOnce(&mut Pdf) -> Result<T>,
     {
         // `as i64` here would overflow for PDF files bigger than 2^63 bytes
         let offset = self.tell()? as i64;
@@ -331,36 +328,36 @@ impl Pdf {
     /// object, the root object, the xref list, the trailer object and the
     /// startxref position.
     pub fn finish(mut self) -> Result<()> {
-        self.write_object_with_id(PAGES_OBJECT_ID, |pdf| {
+        self.write_object_with_id(PAGE_OBJECT_ID, |pdf| {
             write!(
                 pdf.output,
                 "<< /Type /Pages\n   \
-                 /Count {c}\n   \
+                 /Count {count}\n   \
                  /Kids [ ",
-                c = pdf.page_objects_ids.len()
+                count = pdf.page_object_ids.len()
             )?;
-            for &page in &pdf.page_objects_ids {
+            for page in &pdf.page_object_ids {
                 write!(pdf.output, "{} 0 R ", page)?;
             }
             writeln!(pdf.output, "]\n>>")
         })?;
-        
-        let document_info_id = if !self.document_info.is_empty() {
-            let info = mem::replace(&mut self.document_info, BTreeMap::new());
+
+        let info_id = if !self.info.is_empty() {
+            let info = mem::replace(&mut self.info, BTreeMap::new());
             self.write_new_object(|page_object_id, pdf| {
                 write!(pdf.output, "<<")?;
-                for (key, value) in info {
-                    writeln!(pdf.output, " /{} ({})", key, value)?;
+                for (meta, value) in info {
+                    writeln!(pdf.output, " /{} ({})", meta, value)?;
                 }
                 if let Ok(now) = time::strftime("%Y%m%d%H%M%S%z", &time::now())
                 {
                     write!(
                         pdf.output,
-                        " /{creation} (D:{now})\n \
-                         /{modify} (D:{now})",
+                        " /{created} (D:{now})\n \
+                         /{modified} (D:{now})",
                         now = now,
-                        creation = MetaData::CreationDate,
-                        modify = MetaData::ModDate
+                        created = MetaData::CreationDate,
+                        modified = MetaData::ModDate
                     )?;
                 }
                 writeln!(pdf.output, ">>")?;
@@ -370,14 +367,14 @@ impl Pdf {
             None
         };
 
-        let outlines_id = self.write_outlines()?;
+        let outlines_id = self.write_outline()?;
 
         self.write_object_with_id(ROOT_OBJECT_ID, |pdf| {
             writeln!(
                 pdf.output,
                 "<< /Type /Catalog\n   \
                  /Pages {} 0 R",
-                PAGES_OBJECT_ID
+                PAGE_OBJECT_ID
             )?;
             if let Some(outlines_id) = outlines_id {
                 writeln!(pdf.output, "/Outlines {} 0 R", outlines_id)?;
@@ -390,13 +387,13 @@ impl Pdf {
             self.output,
             "xref\n\
              0 {}\n\
-             0000000000 65535 f ",
+             0000000000 65535 f",
             self.object_offsets.len()
         )?;
         // Object 0 (above) is special
         for &offset in self.object_offsets.iter().skip(1) {
             assert!(offset >= 0);
-            writeln!(self.output, "{:010} 00000 n ", offset)?;
+            writeln!(self.output, "{:010} 00000 n", offset)?;
         }
         writeln!(
             self.output,
@@ -406,7 +403,7 @@ impl Pdf {
             size = self.object_offsets.len(),
             root = ROOT_OBJECT_ID
         )?;
-        if let Some(id) = document_info_id {
+        if let Some(id) = info_id {
             writeln!(self.output, "   /Info {} 0 R", id)?;
         }
         writeln!(
@@ -420,25 +417,26 @@ impl Pdf {
         Ok(())
     }
 
-    fn write_outlines(&mut self) -> Result<Option<usize>> {
-        if self.outline_items.is_empty() {
+    fn write_outline(&mut self) -> Result<Option<usize>> {
+        if self.outline.is_empty() {
             return Ok(None);
         }
 
         let parent_id = self.object_offsets.len();
         self.object_offsets.push(-1);
-        let count = self.outline_items.len();
+        let count = self.outline.len();
         let mut first_id = 0;
         let mut last_id = 0;
-        let items = mem::replace(&mut self.outline_items, Vec::new());
-        for (i, item) in items.iter().enumerate() {
+        let outline = mem::replace(&mut self.outline, Vec::new());
+
+        for (i, item) in outline.iter().enumerate() {
             let (is_first, is_last) = (i == 0, i == count - 1);
             let id = self.write_new_object(|object_id, pdf| {
                 item.write_dictionary(
                     &mut pdf.output,
                     parent_id,
                     if is_first { None } else { Some(object_id - 1) },
-                    if is_last { None } else { Some(object_id + 1) }
+                    if is_last { None } else { Some(object_id + 1) },
                 ).and(Ok(object_id))
             })?;
             if is_first {
@@ -448,6 +446,7 @@ impl Pdf {
                 last_id = id;
             }
         }
+
         self.write_object_with_id(parent_id, |pdf| {
             writeln!(
                 pdf.output,
@@ -466,18 +465,18 @@ impl Pdf {
 }
 
 struct NamedRefs {
-    oids: HashMap<FontRef, usize>
+    oids: HashMap<FontRef, usize>,
 }
 
 impl NamedRefs {
     fn with_capacity(capacity: usize) -> Self {
         NamedRefs {
-            oids: HashMap::with_capacity(capacity)
+            oids: HashMap::with_capacity(capacity),
         }
     }
 
-    fn insert(&mut self, name: FontRef, oid: usize) -> Option<usize> {
-        self.oids.insert(name, oid)
+    fn insert(&mut self, name: FontRef, object_id: usize) -> Option<usize> {
+        self.oids.insert(name, object_id)
     }
 }
 

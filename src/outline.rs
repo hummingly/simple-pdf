@@ -13,14 +13,14 @@ use std::io::{Result, Write};
 #[derive(Clone)]
 pub struct OutlineItem {
     title: String,
-    page_id: Option<usize>
+    page_id: Option<usize>,
 }
 
 impl OutlineItem {
     pub fn new(title: &str) -> OutlineItem {
         OutlineItem {
             title: title.to_string(),
-            page_id: None
+            page_id: None,
         }
     }
 
@@ -33,7 +33,7 @@ impl OutlineItem {
         output: &mut Write,
         parent_id: usize,
         prev: Option<usize>,
-        next: Option<usize>
+        next: Option<usize>,
     ) -> Result<()> {
         output.write_all(b"<< /Title (")?;
         output.write_all(&WIN_ANSI_ENCODING.encode_string(&self.title))?;

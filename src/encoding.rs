@@ -1,10 +1,10 @@
 use std::collections::BTreeMap;
 
-/// To represent the text of a font correctly and conforming to the PDF
-/// standard create a FontEncoding instance which contains the base and font
-/// encoding. The base encoding is plattform specific (WinAnsiEncoding or
-/// MacRomanEncoding currently only) and the encoding is specified by the font.
+/// A FontEncoding containing the base and actual font encoding to represent a
+/// font properly in a PDF.
 ///
+/// The base encoding is plattform specific and the encoding is specified by
+/// the font.
 /// Currently, only WinAnsiEncoding and MacRomanEncoding is supported.
 ///
 /// # Example
@@ -16,7 +16,7 @@ use std::collections::BTreeMap;
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct FontEncoding {
     base: BaseEncoding,
-    encoding: Encoding
+    encoding: Encoding,
 }
 
 impl Default for FontEncoding {
@@ -40,7 +40,7 @@ impl FontEncoding {
         let enc = get_base_enc();
         FontEncoding {
             base: enc,
-            encoding: enc.to_encoding().clone()
+            encoding: enc.to_encoding().clone(),
         }
     }
 
@@ -48,7 +48,7 @@ impl FontEncoding {
     pub fn with_encoding(encoding: Encoding) -> Self {
         FontEncoding {
             base: get_base_enc(),
-            encoding
+            encoding,
         }
     }
 
@@ -85,7 +85,7 @@ impl FontEncoding {
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum BaseEncoding {
     WinAnsiEncoding,
-    MacRomanEncoding // MacExpertEncoding
+    MacRomanEncoding, // MacExpertEncoding
 }
 
 impl BaseEncoding {
@@ -122,7 +122,7 @@ impl BaseEncoding {
 pub struct Encoding {
     name: String,
     name_to_code: BTreeMap<&'static str, u8>,
-    unicode_to_code: BTreeMap<char, u8>
+    unicode_to_code: BTreeMap<char, u8>,
 }
 
 impl Encoding {
@@ -130,12 +130,12 @@ impl Encoding {
     pub fn new(
         name: String,
         code: BTreeMap<&'static str, u8>,
-        unicode: BTreeMap<char, u8>
+        unicode: BTreeMap<char, u8>,
     ) -> Self {
         Encoding {
             name,
             name_to_code: code,
-            unicode_to_code: unicode
+            unicode_to_code: unicode,
         }
     }
 
@@ -188,7 +188,10 @@ impl Encoding {
     /// use simple_pdf::{BuiltinFont, FontSource};
     /// let enc = BuiltinFont::Helvetica.encoding();
     /// let symb_enc = BuiltinFont::Symbol.encoding();
-    /// assert_eq!(vec![65, 66, 67], enc.encode_string("ABC"));
+    /// assert_eq!(
+    ///     vec![92, 92, 92, 40, 65, 66, 67, 92, 41, 92, 92],
+    ///     enc.encode_string("\\(ABC)\\")
+    /// );
     /// assert_eq!(
     ///     vec![82, 228, 107, 115, 109, 246, 114, 103, 229, 115],
     ///     enc.encode_string("Räksmörgås")
@@ -206,21 +209,20 @@ impl Encoding {
         let mut result = Vec::with_capacity(text.len());
         for ch in text.chars() {
             match self.encode_char(ch) {
-                Some(ch) => match ch {
-                    b'\\' | b'(' | b')' => {
+                Some(ch) => {
+                    if ch == b'\\' || ch == b'(' || ch == b')' {
                         result.push(b'\\');
-                        result.push(ch)
                     }
-                    _ => result.push(ch)
-                },
-                None => result.push(b'?')
+                    result.push(ch);
+                }
+                None => result.push(b'?'),
             }
         }
         result.shrink_to_fit();
         result
     }
 
-    fn init_block(&mut self, start: u8, data: Vec<&'static str>) {
+    fn init_block(&mut self, start: u8, data: &[&'static str]) {
         for (i, name) in data.iter().enumerate() {
             self.name_to_code.insert(name, start + (i as u8));
         }
@@ -228,173 +230,6 @@ impl Encoding {
 }
 
 lazy_static! {
-    // https://unicode.org/Public/MAPPINGS/VENDORS/ADOBE/stdenc.txt
-    // pub static ref STANDARD_ENCODING: Encoding = {
-    //     let mut codes = BTreeMap::new();
-    //     let mut names = BTreeMap::new();
-    //     {
-    //         let mut enc = |ch: char, name: &'static str, code: u8| {
-    //             codes.insert(ch, code);
-    //             names.insert(name, code);
-    //         };
-    //         enc(' ', "space", 0o40);
-    //         enc(' ', "space", 0o40);
-    //         enc('!', "exclam", 0o41);
-    //         enc('"', "quotedbl", 0o42);
-    //         enc('#', "numbersign", 0o43);
-    //         enc('$', "dollar", 0o44);
-    //         enc('%', "percent", 0o45);
-    //         enc('&', "ampersand", 0o46);
-    //         enc('’', "quoteright", 0o47);
-    //         enc('(', "parenleft", 0o50);
-    //         enc(')', "parenright", 0o51);
-    //         enc('*', "asterisk", 0o52);
-    //         enc('+', "plus", 0o53);
-    //         enc(',', "comma", 0o54);
-    //         enc('-', "hyphen", 0o55);
-    //         enc('­', "hyphen", 0o55);
-    //         enc('.', "period", 0o56);
-    //         enc('/', "slash", 0o57);
-    //         enc('0', "zero", 0o60);
-    //         enc('1', "one", 0o61);
-    //         enc('2', "two", 0o62);
-    //         enc('3', "three", 0o63);
-    //         enc('4', "four", 0o64);
-    //         enc('5', "five", 0o65);
-    //         enc('6', "six", 0o66);
-    //         enc('7', "seven", 0o67);
-    //         enc('8', "eight", 0o70);
-    //         enc('9', "nine", 0o71);
-    //         enc(':', "colon", 0o72);
-    //         enc(';', "semicolon", 0o73);
-    //         enc('<', "less", 0o74);
-    //         enc('=', "equal", 0o75);
-    //         enc('>', "greater", 0o76);
-    //         enc('?', "question", 0o77);
-    //         enc('@', "at", 0o100);
-    //         enc('A', "A", 0o101);
-    //         enc('B', "B", 0o102);
-    //         enc('C', "C", 0o103);
-    //         enc('D', "D", 0o104);
-    //         enc('E', "E", 0o105);
-    //         enc('F', "F", 0o106);
-    //         enc('G', "G", 0o107);
-    //         enc('H', "H", 0o110);
-    //         enc('I', "I", 0o111);
-    //         enc('J', "J", 0o112);
-    //         enc('K', "K", 0o113);
-    //         enc('L', "L", 0o114);
-    //         enc('M', "M", 0o115);
-    //         enc('N', "N", 0o116);
-    //         enc('O', "O", 0o117);
-    //         enc('P', "P", 0o120);
-    //         enc('Q', "Q", 0o121);
-    //         enc('R', "R", 0o122);
-    //         enc('S', "S", 0o123);
-    //         enc('T', "T", 0o124);
-    //         enc('U', "U", 0o125);
-    //         enc('V', "V", 0o126);
-    //         enc('W', "W", 0o127);
-    //         enc('X', "X", 0o130);
-    //         enc('Y', "Y", 0o131);
-    //         enc('Z', "Z", 0o132);
-    //         enc('[', "bracketleft", 0o133);
-    //         enc('\\', "backslash", 0o134);
-    //         enc(']', "bracketright", 0o135);
-    //         enc('^', "asciicircum", 0o136);
-    //         enc('_', "underscore", 0o137);
-    //         enc('‘', "quoteleft", 0o140);
-    //         enc('a', "a", 0o141);
-    //         enc('b', "b", 0o142);
-    //         enc('c', "c", 0o143);
-    //         enc('d', "d", 0o144);
-    //         enc('e', "e", 0o145);
-    //         enc('f', "f", 0o146);
-    //         enc('g', "g", 0o147);
-    //         enc('h', "h", 0o150);
-    //         enc('i', "i", 0o151);
-    //         enc('j', "j", 0o152);
-    //         enc('k', "k", 0o153);
-    //         enc('l', "l", 0o154);
-    //         enc('m', "m", 0o155);
-    //         enc('n', "n", 0o156);
-    //         enc('o', "o", 0o157);
-    //         enc('p', "p", 0o160);
-    //         enc('q', "q", 0o161);
-    //         enc('r', "r", 0o162);
-    //         enc('s', "s", 0o163);
-    //         enc('t', "t", 0o164);
-    //         enc('u', "u", 0o165);
-    //         enc('v', "v", 0o166);
-    //         enc('w', "w", 0o167);
-    //         enc('x', "x", 0o170);
-    //         enc('y', "y", 0o171);
-    //         enc('z', "z", 0o172);
-    //         enc('{', "braceleft", 0o173);
-    //         enc('|', "bar", 0o174);
-    //         enc('}', "braceright", 0o175);
-    //         enc('~', "asciitilde", 0o176);
-    //         enc('¡', "exclamdown", 0o241);
-    //         enc('¢', "cent", 0o242);
-    //         enc('£', "sterling", 0o243);
-    //         enc('⁄', "fraction", 0o244);
-    //         enc('∕', "fraction", 0o244);
-    //         enc('¥', "yen", 0o245);
-    //         enc('ƒ', "florin", 0o246);
-    //         enc('§', "section", 0o247);
-    //         enc('¤', "currency", 0o250);
-    //         enc('\'', "quotesingle", 0o251);
-    //         enc('“', "quotedblleft", 0o252);
-    //         enc('«', "guillemotleft", 0o253);
-    //         enc('‹', "guilsinglleft", 0o254);
-    //         enc('›', "guilsinglright", 0o255);
-    //         enc('ﬁ', "fi", 0o256);
-    //         enc('ﬂ', "fl", 0o257);
-    //         enc('–', "endash", 0o261);
-    //         enc('†', "dagger", 0o262);
-    //         enc('‡', "daggerdbl", 0o263);
-    //         enc('·', "periodcentered", 0o264);
-    //         enc('∙', "periodcentered", 0o264);
-    //         enc('¶', "paragraph", 0o266);
-    //         enc('•', "bullet", 0o267);
-    //         enc('‚', "quotesinglbase", 0o270);
-    //         enc('„', "quotedblbase", 0o271);
-    //         enc('”', "quotedblright", 0o272);
-    //         enc('»', "guillemotright", 0o273);
-    //         enc('…', "ellipsis", 0o274);
-    //         enc('‰', "perthousand", 0o275);
-    //         enc('¿', "questiondown", 0o277);
-    //         enc('`', "grave", 0o301);
-    //         enc('´', "acute", 0o302);
-    //         enc('ˆ', "circumflex", 0o303);
-    //         enc('˜', "tilde", 0o304);
-    //         enc('¯', "macron", 0o305);
-    //         enc('ˉ', "macron", 0o305);
-    //         enc('˘', "breve", 0o306);
-    //         enc('˙', "dotaccent", 0o307);
-    //         enc('¨', "dieresis", 0o310);
-    //         enc('˚', "ring", 0o312);
-    //         enc('¸', "cedilla", 0o313);
-    //         enc('˝', "hungarumlaut", 0o315);
-    //         enc('˛', "ogonek", 0o316);
-    //         enc('ˇ', "caron", 0o317);
-    //         enc('—', "emdash", 0o320);
-    //         enc('Æ', "AE", 0o341);
-    //         enc('ª', "ordfeminine", 0o343);
-    //         enc('Ł', "Lslash", 0o350);
-    //         enc('Ø', "Oslash", 0o351);
-    //         enc('Œ', "OE", 0o352);
-    //         enc('º', "ordmasculine", 0o353);
-    //         enc('æ', "ae", 0o361);
-    //         enc('ı', "dotlessi", 0o365);
-    //         enc('ł', "lslash", 0o370);
-    //         enc('ø', "oslash", 0o371);
-    //         enc('œ', "oe", 0o372);
-    //         enc('ß', "germandbls", 0o373);
-    //     }
-    //     Encoding::new("StandardEncoding".to_string(), names, codes)
-    // };
-
     pub static ref WIN_ANSI_ENCODING: Encoding = {
         let mut codes = BTreeMap::new();
         // /WinAnsiEncoding is kind of close to first byte of unicode
@@ -430,78 +265,76 @@ lazy_static! {
         codes.insert('ž', 158);
         codes.insert('Ÿ', 159);
         let mut result = Encoding::new("WinAnsiEncoding".to_string(), BTreeMap::new(), codes);
-        result.init_block(0o40, vec!(
-            "space", "exclam", "quotedbl", "numbersign",
-            "dollar", "percent", "ampersand", "quotesingle"));
-        result.init_block(0o50, vec!(
+        result.init_block(0o40, &["space", "exclam", "quotedbl", "numbersign","dollar", "percent", "ampersand", "quotesingle"]);
+        result.init_block(0o50, &[
             "parenleft", "parenright", "asterisk", "plus",
-            "comma", "hyphen", "period", "slash"));
-        result.init_block(0o60, vec!(
-            "zero", "one", "two", "three", "four", "five", "six", "seven"));
-        result.init_block(0o70, vec!(
+            "comma", "hyphen", "period", "slash"]);
+        result.init_block(0o60, &[
+            "zero", "one", "two", "three", "four", "five", "six", "seven"]);
+        result.init_block(0o70, &[
             "eight", "nine", "colon", "semicolon",
-            "less", "equal", "greater", "question"));
-        result.init_block(0o100, vec!(
+            "less", "equal", "greater", "question"]);
+        result.init_block(0o100, &[
             "at", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J",
             "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V",
-            "W", "X", "Y", "Z"));
-        result.init_block(0o133, vec!(
+            "W", "X", "Y", "Z"]);
+        result.init_block(0o133, &[
             "bracketleft",
-            "backslash", "bracketright", "asciicircum", "underscore"));
-        result.init_block(0o140, vec!(
+            "backslash", "bracketright", "asciicircum", "underscore"]);
+        result.init_block(0o140, &[
             "grave", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
             "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v",
-            "w", "x", "y", "z"));
-        result.init_block(0o173, vec!(
-            "braceleft", "bar", "braceright", "asciitilde"));
-        result.init_block(0o200, vec!(
+            "w", "x", "y", "z"]);
+        result.init_block(0o173, &[
+            "braceleft", "bar", "braceright", "asciitilde"]);
+        result.init_block(0o200, &[
             "Euro", "..1", "quotesinglbase", "florin",
-            "quotedblbase", "ellipsis", "dagger", "daggerdbl"));
-        result.init_block(0o210, vec!(
+            "quotedblbase", "ellipsis", "dagger", "daggerdbl"]);
+        result.init_block(0o210, &[
             "circumflex", "perthousand", "Scaron", "guilsinglleft",
-            "OE", "..5", "Zcaron", "..7"));
-        result.init_block(0o220, vec!(
+            "OE", "..5", "Zcaron", "..7"]);
+        result.init_block(0o220, &[
             "..0", "quoteleft", "quoteright", "quotedblleft",
-            "quotedblright", "bullet", "endash", "emdash"));
-        result.init_block(0o230, vec!(
+            "quotedblright", "bullet", "endash", "emdash"]);
+        result.init_block(0o230, &[
             "tilde", "trademark", "scaron", "guilsinglright",
-            "oe", "..5", "zcaron", "Ydieresis"));
-        result.init_block(0o240, vec!(
+            "oe", "..5", "zcaron", "Ydieresis"]);
+        result.init_block(0o240, &[
             "..0", "exclamdown", "cent", "sterling",
-            "currency", "yen", "brokenbar", "section"));
-        result.init_block(0o250, vec!(
+            "currency", "yen", "brokenbar", "section"]);
+        result.init_block(0o250, &[
             "dieresis", "copyright", "ordfeminine", "guillemotleft",
-            "logicalnot", "..5", "registered", "macron"));
-        result.init_block(0o260, vec!(
+            "logicalnot", "..5", "registered", "macron"]);
+        result.init_block(0o260, &[
             "degree", "plusminus", "twosuperior", "threesuperior",
-            "acute", "mu", "paragraph", "periodcentered"));
-        result.init_block(0o270, vec!(
+            "acute", "mu", "paragraph", "periodcentered"]);
+        result.init_block(0o270, &[
             "cedilla", "onesuperior", "ordmasculine", "guillemotright",
-            "onequarter", "onehalf", "threequarters", "questiondown"));
-        result.init_block(0o300, vec!(
+            "onequarter", "onehalf", "threequarters", "questiondown"]);
+        result.init_block(0o300, &[
             "Agrave", "Aacute", "Acircumflex", "Atilde",
-            "Adieresis", "Aring", "AE", "Ccedilla"));
-        result.init_block(0o310, vec!(
+            "Adieresis", "Aring", "AE", "Ccedilla"]);
+        result.init_block(0o310, &[
             "Egrave", "Eacute", "Ecircumflex", "Edieresis",
-            "Igrave", "Iacute", "Icircumflex", "Idieresis"));
-        result.init_block(0o320, vec!(
+            "Igrave", "Iacute", "Icircumflex", "Idieresis"]);
+        result.init_block(0o320, &[
             "Eth", "Ntilde", "Ograve", "Oacute",
-            "Ocircumflex", "Otilde", "Odieresis", "multiply"));
-        result.init_block(0o330, vec!(
+            "Ocircumflex", "Otilde", "Odieresis", "multiply"]);
+        result.init_block(0o330, &[
             "Oslash", "Ugrave", "Uacute", "Ucircumflex",
-            "Udieresis", "Yacute", "Thorn", "germandbls"));
-        result.init_block(0o340, vec!(
+            "Udieresis", "Yacute", "Thorn", "germandbls"]);
+        result.init_block(0o340, &[
             "agrave", "aacute", "acircumflex", "atilde",
-            "adieresis", "aring", "ae", "ccedilla"));
-        result.init_block(0o350, vec!(
+            "adieresis", "aring", "ae", "ccedilla"]);
+        result.init_block(0o350, &[
             "egrave", "eacute", "ecircumflex", "edieresis",
-            "igrave", "iacute", "icircumflex", "idieresis"));
-        result.init_block(0o360, vec!(
+            "igrave", "iacute", "icircumflex", "idieresis"]);
+        result.init_block(0o360, &[
             "eth", "ntilde", "ograve", "oacute",
-            "ocircumflex", "otilde", "odieresis", "divide"));
-        result.init_block(0o370, vec!(
+            "ocircumflex", "otilde", "odieresis", "divide"]);
+        result.init_block(0o370, &[
             "oslash", "ugrave", "uacute", "ucircumflex",
-            "udieresis", "yacute", "thorn", "ydieresis"));
+            "udieresis", "yacute", "thorn", "ydieresis"]);
         result
     };
 

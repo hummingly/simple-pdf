@@ -1,8 +1,8 @@
 //! Types for representing details in the graphics state.
-
 use std::f32::consts::PI;
 use std::fmt;
 use std::ops::Mul;
+use units::{LengthUnit, UserSpace};
 
 /// Line join styles, as described in section 8.4.3.4 of the PDF specification.
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
@@ -13,7 +13,7 @@ pub enum JoinStyle {
     Round,
     /// End the lines as with `CapStyle::Butt` and fill the resulting gap with
     /// a triangle.
-    Bevel
+    Bevel,
 }
 
 impl fmt::Display for JoinStyle {
@@ -24,7 +24,7 @@ impl fmt::Display for JoinStyle {
             match *self {
                 JoinStyle::Miter => 0,
                 JoinStyle::Round => 1,
-                JoinStyle::Bevel => 2
+                JoinStyle::Bevel => 2,
             }
         )
     }
@@ -39,7 +39,7 @@ pub enum CapStyle {
     Round,
     /// Include a square around the endpoint, so the line continues for half a
     /// line-width through the endpoint.
-    ProjectingSquare
+    ProjectingSquare,
 }
 
 impl fmt::Display for CapStyle {
@@ -50,7 +50,7 @@ impl fmt::Display for CapStyle {
             match *self {
                 CapStyle::Butt => 0,
                 CapStyle::Round => 1,
-                CapStyle::ProjectingSquare => 2
+                CapStyle::ProjectingSquare => 2,
             }
         )
     }
@@ -62,7 +62,7 @@ pub enum Color {
     #[doc(hidden)]
     RGB { red: u8, green: u8, blue: u8 },
     #[doc(hidden)]
-    Gray { gray: u8 }
+    Gray { gray: u8 },
 }
 
 impl Color {
@@ -100,7 +100,7 @@ impl fmt::Display for Color {
             Color::RGB { red, green, blue } => {
                 write!(f, "{} {} {}", norm(red), norm(green), norm(blue))
             }
-            Color::Gray { gray } => write!(f, "{}", norm(gray))
+            Color::Gray { gray } => write!(f, "{}", norm(gray)),
         }
     }
 }
@@ -113,60 +113,72 @@ impl fmt::Display for Color {
 /// # Examples
 ///
 /// ```
+/// # #[macro_use]
+/// # extern crate simple_pdf;
+///
+/// # use simple_pdf::units::{Points, UserSpace, LengthUnit};
 /// # use simple_pdf::{Pdf, BuiltinFont, FontSource};
 /// # use simple_pdf::graphicsstate::Matrix;
+/// # use std::io;
 ///
-/// # let mut document: Pdf = Pdf::create("foo.pdf").unwrap();
-/// # document.render_page(180.0, 240.0, |canvas| {
-/// canvas.concat(&Matrix::translate(10.0, 24.0))?;
+/// # fn main() -> io::Result<()> {
+/// # let mut document: Pdf = Pdf::create("foo.pdf")?;
+/// # document.render_page(pt!(180), pt!(240), |canvas| {
+///     canvas.concat(Matrix::translate(pt!(10), pt!(24)))?;
 ///
-/// // Matrixes can be combined by multiplication:
-/// canvas.concat(&(Matrix::translate(7.0, 0.0) * Matrix::rotate_deg(45.0)))?;
-/// // will be visualy identical to:
-/// canvas.concat(&Matrix::translate(7.0, 0.0))?;
-/// canvas.concat(&Matrix::rotate_deg(45.0))?;
+///     // Matrixes can be combined by multiplication:
+///     canvas.concat(
+///         (Matrix::translate(pt!(7), pt!(0)) * Matrix::rotate_deg(45.0))
+///     )?;
+///     // will be visualy identical to:
+///     canvas.concat(Matrix::translate(pt!(7), pt!(0)))?;
+///     canvas.concat(Matrix::rotate_deg(45.0))?;
 /// # Ok(())
-/// # }).unwrap();
-/// # document.finish().unwrap();
+/// # })?;
+/// # document.finish()
+/// }
 /// ```
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Matrix {
-    v: [f32; 6]
+    v: [f32; 6],
 }
 
 impl Matrix {
     /// Construct a matrix for translation
-    pub fn translate(dx: f32, dy: f32) -> Self {
+    pub fn translate<T: LengthUnit>(
+        dx: UserSpace<T>,
+        dy: UserSpace<T>,
+    ) -> Self {
         Matrix {
-            v: [1., 0., 0., 1., dx, dy]
+            v: [1., 0., 0., 1., dx.pt as f32, dy.pt as f32],
         }
     }
     /// Construct a matrix for rotating by `a` radians.
-    pub fn rotate(a: f32) -> Self {
+    pub fn rotate(alpha: f32) -> Self {
         Matrix {
-            v: [a.cos(), a.sin(), -a.sin(), a.cos(), 0., 0.]
+            v: [alpha.cos(), alpha.sin(), -alpha.sin(), alpha.cos(), 0., 0.],
         }
     }
     /// Construct a matrix for rotating by `a` degrees.
-    pub fn rotate_deg(a: f32) -> Self {
-        Self::rotate(a * PI / 180.)
+    pub fn rotate_deg(alpha: f32) -> Self {
+        Matrix::rotate(alpha * PI / 180.)
     }
     /// Construct a matrix for scaling by factor `sx` in x-direction and by
     /// `sy` in y-direction.
     pub fn scale(sx: f32, sy: f32) -> Self {
         Matrix {
-            v: [sx, 0., 0., sy, 0., 0.]
+            v: [sx, 0., 0., sy, 0., 0.],
         }
     }
     /// Construct a matrix for scaling by the same factor, `s` in both
     /// directions.
-    pub fn uniform_scale(s: f32) -> Self {
-        Self::scale(s, s)
+    pub fn uniform_scale(scale: f32) -> Self {
+        Matrix::scale(scale, scale)
     }
     /// Construct a matrix for skewing.
-    pub fn skew(a: f32, b: f32) -> Self {
+    pub fn skew(alpha: f32, beta: f32) -> Self {
         Matrix {
-            v: [1., a.tan(), b.tan(), 1., 0., 0.]
+            v: [1., alpha.tan(), beta.tan(), 1., 0., 0.],
         }
     }
 }
@@ -179,8 +191,8 @@ impl fmt::Display for Matrix {
 }
 
 impl Mul for Matrix {
-    type Output = Self;
-    fn mul(self, b: Self) -> Self {
+    type Output = Matrix;
+    fn mul(self, b: Matrix) -> Self::Output {
         let a = self.v;
         let b = b.v;
         Matrix {
@@ -190,8 +202,8 @@ impl Mul for Matrix {
                 a[2] * b[0] + a[3] * b[2],
                 a[2] * b[1] + a[3] * b[3],
                 a[4] * b[0] + a[5] * b[2] + b[4],
-                a[4] * b[1] + a[5] * b[3] + b[5]
-            ]
+                a[4] * b[1] + a[5] * b[3] + b[5],
+            ],
         }
     }
 }

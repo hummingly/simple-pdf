@@ -7,7 +7,7 @@ use std::fs::File;
 use std::io::{BufWriter, Result, Write};
 use std::sync::Arc;
 use textobject::TextObject;
-use units::Pt;
+use units::{LengthUnit, Points, UserSpace};
 
 /// An visual area where content can be drawn (a page).
 ///
@@ -16,7 +16,7 @@ use units::Pt;
 pub struct Canvas<'a> {
     output: &'a mut BufWriter<File>,
     fonts: &'a mut HashMap<Font, FontRef>,
-    outline_items: &'a mut Vec<OutlineItem>
+    outline_items: &'a mut Vec<OutlineItem>,
 }
 
 impl<'a> Canvas<'a> {
@@ -24,31 +24,24 @@ impl<'a> Canvas<'a> {
     pub(crate) fn new(
         output: &'a mut BufWriter<File>,
         fonts: &'a mut HashMap<Font, FontRef>,
-        outline_items: &'a mut Vec<OutlineItem>
+        outline_items: &'a mut Vec<OutlineItem>,
     ) -> Canvas<'a> {
         Canvas {
             output,
             fonts,
-            outline_items
+            outline_items,
         }
     }
     /// Append a closed rectangle with a corner at (x, y) and extending width ×
     /// height to the to the current path.
-    pub fn rectangle<U: Into<Pt>>(
+    pub fn rectangle<T: LengthUnit>(
         &mut self,
-        x: U,
-        y: U,
-        width: U,
-        height: U
+        x: UserSpace<T>,
+        y: UserSpace<T>,
+        width: UserSpace<T>,
+        height: UserSpace<T>,
     ) -> Result<()> {
-        writeln!(
-            self.output,
-            "{} {} {} {} re",
-            x.into(),
-            y.into(),
-            width.into(),
-            height.into()
-        )
+        writeln!(self.output, "{} {} {} {} re", x, y, width, height)
     }
     /// Set the line join style in the graphics state.
     pub fn set_line_join_style(&mut self, style: JoinStyle) -> Result<()> {
@@ -59,107 +52,109 @@ impl<'a> Canvas<'a> {
         writeln!(self.output, "{} J", style)
     }
     /// Set the line width in the graphics state.
-    pub fn set_line_width<U: Into<Pt>>(&mut self, width: U) -> Result<()> {
-        writeln!(self.output, "{} w", width.into())
+    pub fn set_line_width<T: LengthUnit>(
+        &mut self,
+        width: UserSpace<T>,
+    ) -> Result<()> {
+        writeln!(self.output, "{} w", width)
     }
     /// Set the line dash pattern in the graphics state. Values must not be
     /// negative, or all array values must not be 0. If this happens the
     /// operation is not executed.
-    pub fn set_dash<U: Into<Pt>>(
+    pub fn set_dash<T: LengthUnit>(
         &mut self,
-        pattern: &[Pt],
-        phase: U
+        pattern: &[UserSpace<T>],
+        phase: UserSpace<T>,
     ) -> Result<()> {
-        if pattern.is_empty() {
-            return Ok(());
-        }
-
+        // a valid array must not be empty and have non-negative values plus
+        // not all values are allowed to be 0
         let mut valid_array = false;
         for dash in pattern {
-            if dash.0.is_sign_positive() && dash.0 != 0.0 {
+            if dash < &pt!(0) {
+                return Ok(());
+            } else if dash > &pt!(0) {
                 valid_array = true;
-                break;
             }
         }
-        if valid_array {
-            write!(self.output, "[ ")?;
-            for dash in pattern {
-                write!(self.output, "{} ", dash)?;
-            }
-            writeln!(self.output, "] {} d", phase.into())
-        } else {
-            Ok(())
+        if !valid_array {
+            return Ok(());
         }
+        write!(self.output, "[{}", pattern[0])?;
+        for dash in pattern.iter().skip(1) {
+            write!(self.output, " {}", dash)?;
+        }
+        writeln!(self.output, "] {} d", phase)
     }
     /// Set color for stroking operations.
     pub fn set_stroke_color(&mut self, color: Color) -> Result<()> {
         match color {
             Color::RGB { .. } => writeln!(self.output, "{} SC", color),
-            Color::Gray { .. } => writeln!(self.output, "{} G", color)
+            Color::Gray { .. } => writeln!(self.output, "{} G", color),
         }
     }
     /// Set color for non-stroking operations.
     pub fn set_fill_color(&mut self, color: Color) -> Result<()> {
         match color {
             Color::RGB { .. } => writeln!(self.output, "{} sc", color),
-            Color::Gray { .. } => writeln!(self.output, "{} g", color)
+            Color::Gray { .. } => writeln!(self.output, "{} g", color),
         }
     }
 
     /// Modify the current transformation matrix for coordinates by
     /// concatenating the specified matrix.
-    pub fn concat(&mut self, matrix: &Matrix) -> Result<()> {
+    pub fn concat(&mut self, matrix: Matrix) -> Result<()> {
         writeln!(self.output, "{} cm", matrix)
     }
 
     /// Append a straight line from (x1, y1) to (x2, y2) to the current path.
-    pub fn line<U: Into<Pt>>(
+    pub fn line<T: LengthUnit>(
         &mut self,
-        x1: U,
-        y1: U,
-        x2: U,
-        y2: U
+        x1: UserSpace<T>,
+        y1: UserSpace<T>,
+        x2: UserSpace<T>,
+        y2: UserSpace<T>,
     ) -> Result<()> {
         self.move_to(x1, y1)?;
         self.line_to(x2, y2)
     }
     /// Add a straight line from the current point to (x, y) to the current
     /// path.
-    pub fn line_to<U: Into<Pt>>(&mut self, x: U, y: U) -> Result<()> {
-        write!(self.output, "{} {} l ", x.into(), y.into())
+    pub fn line_to<T: LengthUnit>(
+        &mut self,
+        x: UserSpace<T>,
+        y: UserSpace<T>,
+    ) -> Result<()> {
+        write!(self.output, "{} {} l ", x, y)
     }
     /// Begin a new subpath at the point (x, y).
-    pub fn move_to<U: Into<Pt>>(&mut self, x: U, y: U) -> Result<()> {
-        write!(self.output, "{} {} m ", x.into(), y.into())
+    pub fn move_to<T: LengthUnit>(
+        &mut self,
+        x: UserSpace<T>,
+        y: UserSpace<T>,
+    ) -> Result<()> {
+        write!(self.output, "{} {} m ", x, y)
     }
     /// Add an Bézier curve from the current point to (x3, y3) with (x1, y1)
     /// and (x2, y2) as Bézier control points.
-    pub fn curve_to<U: Into<Pt>>(
+    pub fn curve_to<T: LengthUnit>(
         &mut self,
-        x1: U,
-        y1: U,
-        x2: U,
-        y2: U,
-        x3: U,
-        y3: U
+        x1: UserSpace<T>,
+        y1: UserSpace<T>,
+        x2: UserSpace<T>,
+        y2: UserSpace<T>,
+        x3: UserSpace<T>,
+        y3: UserSpace<T>,
     ) -> Result<()> {
-        writeln!(
-            self.output,
-            "{} {} {} {} {} {} c",
-            x1.into(),
-            y1.into(),
-            x2.into(),
-            y2.into(),
-            x3.into(),
-            y3.into()
-        )
+        writeln!(self.output, "{} {} {} {} {} {} c", x1, y1, x2, y2, x3, y3)
     }
     /// Add a circle approximated by four cubic Bézier curves to the current
     /// path. Based on http://spencermortensen.com/articles/bezier-circle/.
-    pub fn circle<U: Into<Pt>>(&mut self, x: U, y: U, r: U) -> Result<()> {
-        let x = x.into().0;
-        let y = y.into().0;
-        let r = r.into().0;
+    pub fn circle<T: LengthUnit>(
+        &mut self,
+        x: UserSpace<T>,
+        y: UserSpace<T>,
+        r: UserSpace<T>,
+    ) -> Result<()> {
         let top = y - r;
         let bottom = y + r;
         let left = x - r;
@@ -200,7 +195,7 @@ impl<'a> Canvas<'a> {
                 FontRef::new(
                     next_n,
                     font.encoding().clone(),
-                    Arc::new(font.metrics())
+                    Arc::new(font.metrics()),
                 )
             })
             .clone()
@@ -213,7 +208,7 @@ impl<'a> Canvas<'a> {
     /// argument. On success, returns the value returned by `render_text`.
     pub fn text<F, T>(&mut self, render_text: F) -> Result<T>
     where
-        F: FnOnce(&mut TextObject) -> Result<T>
+        F: FnOnce(&mut TextObject) -> Result<T>,
     {
         writeln!(self.output, "BT")?;
         let result = render_text(&mut TextObject::new(self.output))?;
@@ -221,14 +216,18 @@ impl<'a> Canvas<'a> {
         Ok(result)
     }
     /// Utility method for placing a string of text to the left.
-    pub fn left_text<U: Into<Pt>, F: FontSource>(
+    pub fn left_text<F, T>(
         &mut self,
-        x: U,
-        y: U,
+        x: UserSpace<T>,
+        y: UserSpace<T>,
         font: &F,
-        size: U,
-        text: &str
-    ) -> Result<()> {
+        size: UserSpace<T>,
+        text: &str,
+    ) -> Result<()>
+    where
+        F: FontSource,
+        T: LengthUnit,
+    {
         let font = self.get_font(font);
         self.text(|t| {
             t.set_font(&font, size)?;
@@ -237,38 +236,44 @@ impl<'a> Canvas<'a> {
         })
     }
     /// Utility method for placing a string of text to the right.
-    pub fn right_text<U: Into<Pt>, F: FontSource>(
+    pub fn right_text<F, T>(
         &mut self,
-        x: U,
-        y: U,
+        x: UserSpace<T>,
+        y: UserSpace<T>,
         font: &F,
-        size: U,
-        text: &str
-    ) -> Result<()> {
+        size: UserSpace<T>,
+        text: &str,
+    ) -> Result<()>
+    where
+        F: FontSource,
+        T: LengthUnit,
+    {
         let font = self.get_font(font);
         self.text(|t| {
-            let s: Pt = size.into();
-            let text_width = font.text_width(s, text);
-            t.set_font(&font, s)?;
-            t.pos(x.into() - text_width, y.into())?;
+            let text_width = font.text_width(size, text);
+            t.set_font(&font, size)?;
+            t.pos(x - text_width, y)?;
             t.show(text)
         })
     }
     /// Utility method for placing a string of text in the center.
-    pub fn center_text<U: Into<Pt>, F: FontSource>(
+    pub fn center_text<F, T>(
         &mut self,
-        x: U,
-        y: U,
+        x: UserSpace<T>,
+        y: UserSpace<T>,
         font: &F,
-        size: U,
-        text: &str
-    ) -> Result<()> {
+        size: UserSpace<T>,
+        text: &str,
+    ) -> Result<()>
+    where
+        F: FontSource,
+        T: LengthUnit,
+    {
         let font = self.get_font(font);
         self.text(|t| {
-            let s: Pt = size.into();
-            let text_width = font.text_width(s, text);
-            t.set_font(&font, s)?;
-            t.pos(x.into() - text_width / Pt(2.0), y.into())?;
+            let text_width = font.text_width(size, text);
+            t.set_font(&font, size)?;
+            t.pos(x - text_width / 2.0, y)?;
             t.show(text)
         })
     }

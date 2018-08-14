@@ -7,7 +7,7 @@ use std::io::{BufRead, BufReader, Result};
 /// FontMetrics object is specific to a given encoding.
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub struct FontMetrics {
-    widths: BTreeMap<u8, u16>
+    widths: BTreeMap<u8, u16>,
 }
 
 impl FontMetrics {
@@ -15,7 +15,7 @@ impl FontMetrics {
     pub fn parse(source: File) -> Result<FontMetrics> {
         let source = BufReader::new(source);
         let mut result = FontMetrics {
-            widths: BTreeMap::new()
+            widths: BTreeMap::new(),
         };
         for line in source.lines() {
             let line = line.expect("Could not read file.");

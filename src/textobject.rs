@@ -4,7 +4,7 @@ use graphicsstate::Color;
 use std::fmt;
 use std::fs::File;
 use std::io::{BufWriter, Result, Write};
-use units::Pt;
+use units::{LengthUnit, UserSpace};
 
 /// A text object is where text is put on the canvas.
 ///
@@ -16,47 +16,53 @@ use units::Pt;
 /// # Example
 ///
 /// ```
+/// # #[macro_use]
+/// # extern crate simple_pdf;
+///
+/// # use simple_pdf::units::{Points, UserSpace, LengthUnit};
 /// # use simple_pdf::{Pdf, BuiltinFont, FontSource};
 /// # use simple_pdf::graphicsstate::Matrix;
+/// # use std::io;
 ///
-/// # let mut document = Pdf::create("foo.pdf").unwrap();
-/// # document.render_page(180.0, 240.0, |canvas| {
-/// let serif = canvas.get_font(&BuiltinFont::Times_Roman);
-/// // t will be a TextObject
-/// canvas.text(|t| {
-///     t.set_font(&serif, 14.0)?;
-///     t.set_leading(18.0)?;
-///     t.pos(10.0, 300.0)?;
-///     t.show("Some lines of text in what might look like a")?;
-///     t.show_line("paragraph of three lines. Lorem ipsum dolor")?;
-///     t.show_line("sit amet. Blahonga.")?;
-///     Ok(())
-/// })?;
+/// # fn main() -> io::Result<()> {
+/// # let mut document = Pdf::create("foo.pdf")?;
+/// # document.render_page(pt!(180), pt!(240), |canvas| {
+///     let serif = canvas.get_font(&BuiltinFont::Times_Roman);
+///     // t will be a TextObject
+///     canvas.text(|t| {
+///         t.set_font(&serif, pt!(14))?;
+///         t.set_leading(pt!(18))?;
+///         t.pos(pt!(10), pt!(300))?;
+///         t.show("Some lines of text in what might look like a")?;
+///         t.show_line("paragraph of three lines. Lorem ipsum dolor")?;
+///         t.show_line("sit amet. Blahonga.")
+///     })?;
 /// # Ok(())
-/// # }).unwrap();
-/// # document.finish().unwrap();
+/// # })?;
+/// # document.finish()
+/// }
 /// ```
 pub struct TextObject<'a> {
     output: &'a mut BufWriter<File>,
-    encoding: Encoding
+    encoding: Encoding,
 }
 
 impl<'a> TextObject<'a> {
     // Should not be called by user code.
-    pub(crate) fn new(output: &mut BufWriter<File>) -> TextObject {
+    pub(crate) fn new(output: &'a mut BufWriter<File>) -> Self {
         TextObject {
             output,
-            encoding: get_base_enc().to_encoding().clone()
+            encoding: get_base_enc().to_encoding().clone(),
         }
     }
     /// Set the font and font-size to be used by the following text operations.
-    pub fn set_font<U: Into<Pt>>(
+    pub fn set_font<T: LengthUnit>(
         &mut self,
         font: &FontRef,
-        size: U
+        size: UserSpace<T>,
     ) -> Result<()> {
         self.encoding = font.encoding().clone();
-        writeln!(self.output, "{} {} Tf", font, size.into())
+        writeln!(self.output, "{} {} Tf", font, size)
     }
     /// Set text render mode, which enables rendering text filled, stroked or
     /// as clipping boundary.
@@ -65,35 +71,47 @@ impl<'a> TextObject<'a> {
     }
     /// Set leading, the vertical distance from a line of text to the next.
     /// This is important for the [show_line](#method.show_line) method.
-    pub fn set_leading<U: Into<Pt>>(&mut self, leading: U) -> Result<()> {
-        writeln!(self.output, "{} TL", leading.into())
+    pub fn set_leading<T: LengthUnit>(
+        &mut self,
+        leading: UserSpace<T>,
+    ) -> Result<()> {
+        writeln!(self.output, "{} TL", leading)
     }
     /// Set the rise above the baseline for coming text. Calling set_rise again
     /// with a zero argument will get back to the old baseline.
-    pub fn set_rise<U: Into<Pt>>(&mut self, rise: U) -> Result<()> {
-        writeln!(self.output, "{} Ts", rise.into())
+    pub fn set_rise<T: LengthUnit>(
+        &mut self,
+        rise: UserSpace<T>,
+    ) -> Result<()> {
+        writeln!(self.output, "{} Ts", rise)
     }
     /// Set the amount of extra space between characters, in 1/1000 text unit.
-    pub fn set_char_spacing<U: Into<Pt>>(&mut self, c_space: U) -> Result<()> {
-        writeln!(self.output, "{} Tc", c_space.into())
+    pub fn set_char_spacing<T: LengthUnit>(
+        &mut self,
+        c_space: UserSpace<T>,
+    ) -> Result<()> {
+        writeln!(self.output, "{} Tc", c_space)
     }
     /// Set the amount of extra space between words, in 1/1000 text unit.
-    pub fn set_word_spacing<U: Into<Pt>>(&mut self, w_space: U) -> Result<()> {
-        writeln!(self.output, "{} Tw", w_space.into())
+    pub fn set_word_spacing<T: LengthUnit>(
+        &mut self,
+        w_space: UserSpace<T>,
+    ) -> Result<()> {
+        writeln!(self.output, "{} Tw", w_space)
     }
 
     /// Set color for stroking operations.
     pub fn set_stroke_color(&mut self, color: Color) -> Result<()> {
         match color {
             Color::RGB { .. } => writeln!(self.output, "{} SC", color),
-            Color::Gray { .. } => writeln!(self.output, "{} G", color)
+            Color::Gray { .. } => writeln!(self.output, "{} G", color),
         }
     }
     /// Set color for non-stroking operations.
     pub fn set_fill_color(&mut self, color: Color) -> Result<()> {
         match color {
             Color::RGB { .. } => writeln!(self.output, "{} sc", color),
-            Color::Gray { .. } => writeln!(self.output, "{} g", color)
+            Color::Gray { .. } => writeln!(self.output, "{} g", color),
         }
     }
 
@@ -102,8 +120,12 @@ impl<'a> TextObject<'a> {
     /// The first time `pos` is called in a TextObject, (x, y) refers to the
     /// same point as for [Canvas::move_to](struct.Canvas.html#method.move_to),
     /// after that, the point is relative to the earlier pos.
-    pub fn pos<U: Into<Pt>>(&mut self, x: U, y: U) -> Result<()> {
-        writeln!(self.output, "{} {} Td", x.into(), y.into())
+    pub fn pos<T: LengthUnit>(
+        &mut self,
+        x: UserSpace<T>,
+        y: UserSpace<T>,
+    ) -> Result<()> {
+        writeln!(self.output, "{} {} Td", x, y)
     }
     /// Show a text.
     pub fn show(&mut self, text: &str) -> Result<()> {
@@ -123,18 +145,25 @@ impl<'a> TextObject<'a> {
     /// # Example
     ///
     /// ```
+    /// # #[macro_use]
+    /// # extern crate simple_pdf;
+    ///
+    /// # use simple_pdf::units::{Points, UserSpace, LengthUnit};
     /// # use simple_pdf::{Pdf, BuiltinFont, FontSource};
     /// # use simple_pdf::graphicsstate::Matrix;
+    /// # use std::io;
     ///
-    /// # let mut document = Pdf::create("foo.pdf").unwrap();
-    /// # document.render_page(180.0, 240.0, |canvas| {
+    /// # fn main() -> io::Result<()> {
+    /// # let mut document = Pdf::create("foo.pdf")?;
+    /// # document.render_page(pt!(180), pt!(240), |canvas| {
     /// # let serif = canvas.get_font(&BuiltinFont::Times_Roman);
     /// # canvas.text(|t| {
-    /// #    t.set_font(&serif, 14.0)?;
+    /// #    t.set_font(&serif, pt!(14))?;
     /// t.show_adjusted(&[("W", 130), ("AN", -40), ("D", 0)])
     /// # })
-    /// # }).unwrap();
-    /// # document.finish().unwrap();
+    /// # })?;
+    /// # document.finish()
+    /// # }
     /// ```
     pub fn show_adjusted(&mut self, param: &[(&str, i32)]) -> Result<()> {
         self.output.write_all(b"[")?;
@@ -183,7 +212,7 @@ pub enum RenderMode {
     /// Adds the filled, then stroked text glyphs to clipping path.
     FillAndStrokeAndClipping,
     /// Adds text to clipping path
-    Clipping
+    Clipping,
 }
 
 impl fmt::Display for RenderMode {
@@ -199,7 +228,7 @@ impl fmt::Display for RenderMode {
                 RenderMode::FillAndClipping => 4,
                 RenderMode::StrokeAndClipping => 5,
                 RenderMode::FillAndStrokeAndClipping => 6,
-                RenderMode::Clipping => 7
+                RenderMode::Clipping => 7,
             }
         )
     }

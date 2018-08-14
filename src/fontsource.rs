@@ -1,11 +1,11 @@
 use encoding::{
     get_base_enc, Encoding, FontEncoding, SYMBOL_ENCODING,
-    ZAPFDINGBATS_ENCODING
+    ZAPFDINGBATS_ENCODING,
 };
 use fontmetrics::{get_builtin_metrics, FontMetrics};
 use std::fmt;
 use std::io::{Result, Write};
-use units::Pt;
+use units::{LengthUnit, UserSpace};
 use Pdf;
 
 /// The "Base14" built-in fonts in PDF.
@@ -26,7 +26,7 @@ pub enum BuiltinFont {
     Times_Italic,
     Times_BoldItalic,
     Symbol,
-    ZapfDingbats
+    ZapfDingbats,
 }
 
 impl FontSource for BuiltinFont {
@@ -54,20 +54,25 @@ impl FontSource for BuiltinFont {
         match *self {
             BuiltinFont::Symbol => &SYMBOL_ENCODING,
             BuiltinFont::ZapfDingbats => &ZAPFDINGBATS_ENCODING,
-            _ => get_base_enc().to_encoding()
+            _ => get_base_enc().to_encoding(),
         }
     }
 
-    fn text_width<U: Into<Pt>>(&self, size: U, text: &str) -> Pt {
-        Pt(size.into().0 * self.raw_text_width(text) as f32 / 1000.0)
+    fn text_width<T: LengthUnit>(
+        &self,
+        size: UserSpace<T>,
+        text: &str,
+    ) -> UserSpace<T> {
+        size * self.raw_text_width(text) as f32 / 1000.0
     }
 
     fn raw_text_width(&self, text: &str) -> u32 {
         self.encoding()
             .encode_string(text)
             .iter()
-            .map(|&ch| u32::from(self.metrics().get_width(ch).unwrap_or(100)))
-            .sum()
+            .fold(0, |result, &ch| {
+                result + u32::from(self.metrics().get_width(ch).unwrap_or(100))
+            })
     }
 
     fn metrics(&self) -> FontMetrics {
@@ -91,7 +96,7 @@ impl fmt::Display for BuiltinFont {
             BuiltinFont::Times_Italic => "Times-Italic",
             BuiltinFont::Times_BoldItalic => "Times-BoldItalic",
             BuiltinFont::Symbol => "Symbol",
-            BuiltinFont::ZapfDingbats => "ZapfDingbats"
+            BuiltinFont::ZapfDingbats => "ZapfDingbats",
         };
         write!(f, "{}", name)
     }
@@ -103,14 +108,14 @@ impl fmt::Display for BuiltinFont {
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub(crate) struct Font {
     name: String,
-    encoding: FontEncoding
+    encoding: FontEncoding,
 }
 
 impl Font {
     pub fn from_src<F: FontSource>(source: &F) -> Self {
-        Self {
+        Font {
             name: source.name(),
-            encoding: FontEncoding::with_encoding(source.encoding().clone())
+            encoding: FontEncoding::with_encoding(source.encoding().clone()),
         }
     }
 
@@ -156,13 +161,27 @@ pub trait FontSource {
     ///
     /// # Examples
     /// ```
+    /// #[macro_use]
+    /// extern crate simple_pdf;
+    ///
+    /// use simple_pdf::units::{LengthUnit, Points, UserSpace};
     /// use simple_pdf::{BuiltinFont, FontSource};
-    /// let proportional = BuiltinFont::Helvetica;
-    /// assert_eq!(62.004, proportional.text_width(12.0, "Hello World").0);
-    /// let fixed = BuiltinFont::Courier;
-    /// assert_eq!(60.0, fixed.text_width(10.0, "0123456789").0);
+    ///
+    /// fn main() {
+    ///     let proportional = BuiltinFont::Helvetica;
+    ///     assert_eq!(
+    ///         pt!(62.004),
+    ///         proportional.text_width(pt!(12), "Hello World")
+    ///     );
+    ///     let fixed = BuiltinFont::Courier;
+    ///     assert_eq!(pt!(60.0), fixed.text_width(pt!(10), "0123456789"));
+    /// }
     /// ```
-    fn text_width<U: Into<Pt>>(&self, size: U, text: &str) -> Pt;
+    fn text_width<T: LengthUnit>(
+        &self,
+        size: UserSpace<T>,
+        text: &str,
+    ) -> UserSpace<T>;
 
     /// Get the width of a string in thousands of unit of text space.
     /// This unit is what is used in some places internally in pdf files.
