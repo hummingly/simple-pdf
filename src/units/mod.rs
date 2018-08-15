@@ -29,7 +29,6 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 /// and text are rendered on different devices with different resolutions. The
 /// UserSpace is independent, meaning that on all devices the size is always
 /// the same.
-/// The base unit is point which equals roughly 1/72 inches.
 ///
 /// Basic mathematical operations like addition, subtraction and division can
 /// be executed with units but not multiplication. However, units can be
@@ -75,15 +74,26 @@ where
     }
 }
 
-/// The unit can only be used with the mm! macro.
+/// Representation of the metric unit millimeter.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Millimeters;
-/// The unit can only be used with the pt! macro. The unit points is widely
-/// used in printing.
+/// Representation of the unit points which is used widely in printing.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Points;
 
-/// Using this macro requires importing the Millimeters struct.
+/// Creates from number a value in millimeters. Using this macro requires
+/// importing [Millimeters](units/struct.Millimeters.html).
+/// # Example
+/// ````
+/// #[macro_use]
+/// extern crate simple_pdf;
+/// use simple_pdf::units::{Millimeters, UserSpace};
+/// # fn main() {
+/// // A value in millimeters can be created with integers and floating points.
+/// assert_eq!(mm!(1 as i64), mm!(1.0 as f64));
+/// assert_eq!(mm!(1 as i32), mm!(1.0 as f32));
+/// # }
+/// ````
 #[macro_export]
 macro_rules! mm {
     ($num:expr) => {
@@ -91,7 +101,19 @@ macro_rules! mm {
     };
 }
 
-/// Using this macro requires importing the Points struct.
+/// Creates from number a value in points. Using this macro requires importing
+/// [Points](units/struct.Points.html).
+/// # Example
+/// ````
+/// #[macro_use]
+/// extern crate simple_pdf;
+/// use simple_pdf::units::{Points, UserSpace};
+/// # fn main() {
+/// // A value in points can be created with integers and floating points.
+/// assert_eq!(pt!(1 as i64), pt!(1.0 as f64));
+/// assert_eq!(pt!(1 as i32), pt!(1.0 as f32));
+/// # }
+/// ````
 #[macro_export]
 macro_rules! pt {
     ($num:expr) => {

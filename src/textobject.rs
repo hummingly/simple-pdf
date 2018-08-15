@@ -18,12 +18,10 @@ use units::{LengthUnit, UserSpace};
 /// ```
 /// # #[macro_use]
 /// # extern crate simple_pdf;
-///
 /// # use simple_pdf::units::{Points, UserSpace, LengthUnit};
 /// # use simple_pdf::{Pdf, BuiltinFont, FontSource};
 /// # use simple_pdf::graphicsstate::Matrix;
 /// # use std::io;
-///
 /// # fn main() -> io::Result<()> {
 /// # let mut document = Pdf::create("foo.pdf")?;
 /// # document.render_page(pt!(180), pt!(240), |canvas| {
@@ -40,7 +38,7 @@ use units::{LengthUnit, UserSpace};
 /// # Ok(())
 /// # })?;
 /// # document.finish()
-/// }
+/// # }
 /// ```
 pub struct TextObject<'a> {
     output: &'a mut BufWriter<File>,
@@ -129,10 +127,9 @@ impl<'a> TextObject<'a> {
     }
     /// Show a text.
     pub fn show(&mut self, text: &str) -> Result<()> {
-        self.output.write_all(b"(")?;
+        write!(self.output, "(")?;
         self.output.write_all(&self.encoding.encode_string(text))?;
-        self.output.write_all(b") Tj\n")?;
-        Ok(())
+        writeln!(self.output, ") Tj")
     }
 
     /// Show one or more text strings, allowing individual glyph positioning.
@@ -147,18 +144,16 @@ impl<'a> TextObject<'a> {
     /// ```
     /// # #[macro_use]
     /// # extern crate simple_pdf;
-    ///
     /// # use simple_pdf::units::{Points, UserSpace, LengthUnit};
     /// # use simple_pdf::{Pdf, BuiltinFont, FontSource};
     /// # use simple_pdf::graphicsstate::Matrix;
     /// # use std::io;
-    ///
     /// # fn main() -> io::Result<()> {
     /// # let mut document = Pdf::create("foo.pdf")?;
     /// # document.render_page(pt!(180), pt!(240), |canvas| {
     /// # let serif = canvas.get_font(&BuiltinFont::Times_Roman);
     /// # canvas.text(|t| {
-    /// #    t.set_font(&serif, pt!(14))?;
+    /// # t.set_font(&serif, pt!(14))?;
     /// t.show_adjusted(&[("W", 130), ("AN", -40), ("D", 0)])
     /// # })
     /// # })?;
@@ -166,9 +161,9 @@ impl<'a> TextObject<'a> {
     /// # }
     /// ```
     pub fn show_adjusted(&mut self, param: &[(&str, i32)]) -> Result<()> {
-        self.output.write_all(b"[")?;
+        write!(self.output, "[")?;
         for &(text, offset) in param {
-            self.output.write_all(b"(")?;
+            write!(self.output, "(")?;
             self.output.write_all(&self.encoding.encode_string(text))?;
             write!(self.output, ") {} ", offset)?;
         }
@@ -176,10 +171,9 @@ impl<'a> TextObject<'a> {
     }
     /// Show a text as a line.  See also [set_leading](#method.set_leading).
     pub fn show_line(&mut self, text: &str) -> Result<()> {
-        self.output.write_all(b"(")?;
+        write!(self.output, "(")?;
         self.output.write_all(&self.encoding.encode_string(text))?;
-        self.output.write_all(b") '\n")?;
-        Ok(())
+        writeln!(self.output, ") '")
     }
     /// Push the graphics state on a stack.
     pub fn gsave(&mut self) -> Result<()> {
@@ -194,7 +188,8 @@ impl<'a> TextObject<'a> {
     }
 }
 
-/// Text rendering mode has no effect on Type 3 fonts.
+/// Text rendering modes for the method 
+/// [TextObject.set_render_mode](struct.TextObject.html#method.set_render_mode).
 #[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
 pub enum RenderMode {
     /// Fills text glyphs with nonstroking color.

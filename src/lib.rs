@@ -379,8 +379,7 @@ impl Pdf {
             if let Some(outlines_id) = outlines_id {
                 writeln!(pdf.output, "/Outlines {} 0 R", outlines_id)?;
             }
-            writeln!(pdf.output, ">>")?;
-            Ok(())
+            writeln!(pdf.output, ">>")
         })?;
         let startxref = self.tell()?;
         writeln!(
@@ -413,8 +412,7 @@ impl Pdf {
              {}\n\
              %%EOF",
             startxref
-        )?;
-        Ok(())
+        )
     }
 
     fn write_outline(&mut self) -> Result<Option<usize>> {

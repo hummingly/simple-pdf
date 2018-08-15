@@ -6,13 +6,6 @@ use std::collections::BTreeMap;
 /// The base encoding is plattform specific and the encoding is specified by
 /// the font.
 /// Currently, only WinAnsiEncoding and MacRomanEncoding is supported.
-///
-/// # Example
-/// ````
-/// use simple_pdf::{BuiltinFont, FontSource};
-/// assert_eq!("WinAnsiEncoding", BuiltinFont::Helvetica.encoding().name());
-/// assert_eq!("SymbolEncoding", BuiltinFont::Symbol.encoding().name());
-/// ````
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct FontEncoding {
     base: BaseEncoding,

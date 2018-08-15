@@ -10,7 +10,7 @@ use std::io::{Result, Write};
 ///
 /// To actually create an OutlineItem in a meaningful way, please use
 /// `Canvas::add_outline`.
-#[derive(Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct OutlineItem {
     title: String,
     page_id: Option<usize>,
@@ -35,9 +35,9 @@ impl OutlineItem {
         prev: Option<usize>,
         next: Option<usize>,
     ) -> Result<()> {
-        output.write_all(b"<< /Title (")?;
+        write!(output, "<< /Title (")?;
         output.write_all(&WIN_ANSI_ENCODING.encode_string(&self.title))?;
-        output.write_all(b")\n")?;
+        writeln!(output, ")")?;
         writeln!(output, "/Parent {} 0 R", parent_id)?;
         if let Some(id) = prev {
             writeln!(output, "/Prev {} 0 R", id)?;
